@@ -444,10 +444,8 @@ static int bq27541_get_battery_current_micros(void)
 	} else {
 		goto out;
 	}
-	/* negative current */
-	if (curr&0x8000) {
-		curr = -((~(curr-1))&0xFFFF);
-	}
+
+	curr = (s16)curr;
 	bq27541_di->current_pre = -curr * 1000;
 
 out:
