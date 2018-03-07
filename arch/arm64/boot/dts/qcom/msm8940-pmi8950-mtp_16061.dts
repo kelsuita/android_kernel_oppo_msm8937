@@ -14,6 +14,7 @@
 /dts-v1/;
 
 #include "msm8940.dtsi"
+#include "msm-camera-clk.dtsi"
 #include "oppo-msm8937/msm8940-pmi8950-mtp.dtsi"
 
 / {
