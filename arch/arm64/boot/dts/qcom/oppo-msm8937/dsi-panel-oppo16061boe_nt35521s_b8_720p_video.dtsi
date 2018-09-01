@@ -202,5 +202,11 @@
 		qcom,mdss-dsi-min-refresh-rate = <50>;
 		qcom,mdss-dsi-max-refresh-rate = <60>;
 		qcom,mdss-dsi-panel-orientation = "180";
+
+		cm,mdss-livedisplay-cabc-ui-value = <0x01>;
+		cm,mdss-livedisplay-cabc-image-value = <0x02>;
+		cm,mdss-livedisplay-cabc-video-value = <0x03>;
+		cm,mdss-livedisplay-cabc-cmd = [15 00 00 00 01 00 02 55 00];
+		cm,mdss-livedisplay-post-cmd = [15 01 00 00 01 00 02 53 2C];
 	};
 };
