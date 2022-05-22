@@ -33,6 +33,11 @@
 #include "wcd-mbhc-adc.h"
 #include "wcd-mbhc-v2-api.h"
 
+#ifdef CONFIG_MACH_16061
+extern int oppo_spk_pa_on;
+extern int oppo_hp_pa_on;
+#endif
+
 void wcd_mbhc_jack_report(struct wcd_mbhc *mbhc,
 			  struct snd_soc_jack *jack, int status, int mask)
 {
@@ -307,7 +312,11 @@ out_micb_en:
 			wcd_enable_curr_micbias(mbhc, WCD_MBHC_EN_PULLUP);
 		else
 			/* enable current source and disable mb, pullup*/
+#ifdef CONFIG_MACH_OPPO
+			wcd_enable_curr_micbias(mbhc, WCD_MBHC_EN_MB);
+#else
 			wcd_enable_curr_micbias(mbhc, WCD_MBHC_EN_CS);
+#endif
 
 		/* configure cap settings properly when micbias is disabled */
 		if (mbhc->mbhc_cb->set_cap_mode)
@@ -420,11 +429,17 @@ static void wcd_mbhc_clr_and_turnon_hph_padac(struct wcd_mbhc *mbhc)
 	mutex_lock(&mbhc->hphr_pa_lock);
 	if (test_and_clear_bit(WCD_MBHC_HPHR_PA_OFF_ACK,
 			       &mbhc->hph_pa_dac_state)) {
+#ifdef CONFIG_MACH_16061
+		if (!oppo_hp_pa_on) goto oppo_hp_pa_off;
+#endif
 		pr_debug("%s: HPHR clear flag and enable PA\n", __func__);
 		WCD_MBHC_REG_UPDATE_BITS(WCD_MBHC_HPHR_PA_EN, 1);
 		WCD_MBHC_REG_UPDATE_BITS(WCD_MBHC_HPHR_OCP_DET_EN, 1);
 		pa_turned_on = true;
 	}
+#ifdef CONFIG_MACH_16061
+oppo_hp_pa_off:
+#endif
 	mutex_unlock(&mbhc->hphr_pa_lock);
 	mutex_lock(&mbhc->hphl_pa_lock);
 	if (test_and_clear_bit(WCD_MBHC_HPHL_PA_OFF_ACK,
@@ -482,6 +497,14 @@ static void wcd_mbhc_set_and_turnoff_hph_padac(struct wcd_mbhc *mbhc)
 	 * removal event to sync-up PA's state
 	 */
 	if (wcd_mbhc_is_hph_pa_on(mbhc)) {
+#ifdef CONFIG_MACH_16061
+		if (oppo_hp_pa_on) {
+			pr_debug("%s PA is on, setting HPHR PA_OFF_ACK\n", __func__);
+			set_bit(WCD_MBHC_HPHR_PA_OFF_ACK, &mbhc->hph_pa_dac_state);
+			WCD_MBHC_REG_UPDATE_BITS(WCD_MBHC_HPHR_OCP_DET_EN, 0);
+			goto oppo_hp_pa_on;
+		}
+#endif
 		pr_debug("%s PA is on, setting PA_OFF_ACK\n", __func__);
 		set_bit(WCD_MBHC_HPHL_PA_OFF_ACK, &mbhc->hph_pa_dac_state);
 		set_bit(WCD_MBHC_HPHR_PA_OFF_ACK, &mbhc->hph_pa_dac_state);
@@ -490,6 +513,12 @@ static void wcd_mbhc_set_and_turnoff_hph_padac(struct wcd_mbhc *mbhc)
 	} else {
 		pr_debug("%s PA is off\n", __func__);
 	}
+#ifdef CONFIG_MACH_16061
+oppo_hp_pa_on:
+	/* Just disable HPHR */
+	if (oppo_spk_pa_on) WCD_MBHC_REG_UPDATE_BITS(WCD_MBHC_HPHR_PA_EN, 0);
+	else
+#endif
 	WCD_MBHC_REG_UPDATE_BITS(WCD_MBHC_HPH_PA_EN, 0);
 	usleep_range(wg_time * 1000, wg_time * 1000 + 50);
 
@@ -571,10 +600,16 @@ void wcd_mbhc_report_plug(struct wcd_mbhc *mbhc, int insertion,
 		if (wcd_cancel_btn_work(mbhc)) {
 			pr_debug("%s: button press is canceled\n", __func__);
 		} else if (mbhc->buttons_pressed) {
+#ifdef CONFIG_MACH_OPPO
+			if (mbhc->buttons_pressed & SND_JACK_BTN_4) goto skip;
+#endif
 			pr_debug("%s: release of button press%d\n",
 				 __func__, jack_type);
 			wcd_mbhc_jack_report(mbhc, &mbhc->button_jack, 0,
 					    mbhc->buttons_pressed);
+#ifdef CONFIG_MACH_OPPO
+skip:
+#endif
 			mbhc->buttons_pressed &=
 				~WCD_MBHC_JACK_BUTTON_MASK;
 		}
@@ -643,6 +678,10 @@ void wcd_mbhc_report_plug(struct wcd_mbhc *mbhc, int insertion,
 					    0, WCD_MBHC_JACK_MASK);
 
 			if (mbhc->hph_status == SND_JACK_LINEOUT) {
+#ifdef CONFIG_MACH_OPPO
+				WCD_MBHC_REG_UPDATE_BITS(WCD_MBHC_FSM_EN, 0);
+				WCD_MBHC_REG_UPDATE_BITS(WCD_MBHC_BTN_ISRC_CTL, 0);
+#endif
 
 				pr_debug("%s: Enable micbias\n", __func__);
 				/* Disable current source and enable micbias */
@@ -681,6 +720,7 @@ void wcd_mbhc_report_plug(struct wcd_mbhc *mbhc, int insertion,
 		if (mbhc->mbhc_cb->hph_pa_on_status)
 			is_pa_on = mbhc->mbhc_cb->hph_pa_on_status(codec);
 
+#ifndef CONFIG_MACH_OPPO
 		if (mbhc->impedance_detect &&
 			mbhc->mbhc_cb->compute_impedance &&
 			(mbhc->mbhc_cfg->linein_th != 0) &&
@@ -716,6 +756,7 @@ void wcd_mbhc_report_plug(struct wcd_mbhc *mbhc, int insertion,
 				__func__);
 			}
 		}
+#endif
 
 		mbhc->hph_status |= jack_type;
 
@@ -780,6 +821,11 @@ void wcd_mbhc_find_plug_and_report(struct wcd_mbhc *mbhc,
 
 	WCD_MBHC_RSC_ASSERT_LOCKED(mbhc);
 
+#ifdef CONFIG_MACH_OPPO
+	if (plug_type == MBHC_PLUG_TYPE_GND_MIC_SWAP)
+		plug_type = MBHC_PLUG_TYPE_HEADSET;
+#endif
+
 	if (mbhc->current_plug == plug_type) {
 		pr_debug("%s: cable already reported, exit\n", __func__);
 		goto exit;
@@ -813,8 +859,10 @@ void wcd_mbhc_find_plug_and_report(struct wcd_mbhc *mbhc,
 		wcd_mbhc_report_plug(mbhc, 1, jack_type);
 	} else if (plug_type == MBHC_PLUG_TYPE_HIGH_HPH) {
 		if (mbhc->mbhc_cfg->detect_extn_cable) {
+#ifndef CONFIG_MACH_OPPO
 			/* High impedance device found. Report as LINEOUT */
 			wcd_mbhc_report_plug(mbhc, 1, SND_JACK_LINEOUT);
+#endif
 			pr_debug("%s: setup mic trigger for further detection\n",
 				 __func__);
 
@@ -908,6 +956,9 @@ static void wcd_mbhc_swch_irq_handler(struct wcd_mbhc *mbhc)
 			mbhc->mbhc_fn->wcd_mbhc_detect_plug_type(mbhc);
 	} else if ((mbhc->current_plug != MBHC_PLUG_TYPE_NONE)
 			&& !detection_type) {
+#ifdef CONFIG_MACH_OPPO
+		WCD_MBHC_REG_UPDATE_BITS(WCD_MBHC_MICB_CTRL, 0);
+#endif
 		/* Disable external voltage source to micbias if present */
 		if (mbhc->mbhc_cb->enable_mb_source)
 			mbhc->mbhc_cb->enable_mb_source(mbhc, false);
@@ -980,6 +1031,10 @@ static irqreturn_t wcd_mbhc_mech_plug_detect_irq(int irq, void *data)
 	int r = IRQ_HANDLED;
 	struct wcd_mbhc *mbhc = data;
 
+#ifdef CONFIG_MACH_OPPO
+	__pm_stay_awake(&headset_detect);
+	disable_irq_nosync(irq);
+#endif
 	pr_debug("%s: enter\n", __func__);
 	if (unlikely((mbhc->mbhc_cb->lock_sleep(mbhc, true)) == false)) {
 		pr_warn("%s: failed to hold suspend\n", __func__);
@@ -989,6 +1044,10 @@ static irqreturn_t wcd_mbhc_mech_plug_detect_irq(int irq, void *data)
 		wcd_mbhc_swch_irq_handler(mbhc);
 		mbhc->mbhc_cb->lock_sleep(mbhc, false);
 	}
+#ifdef CONFIG_MACH_OPPO
+	enable_irq(irq);
+	__pm_relax(&headset_detect);
+#endif
 	pr_debug("%s: leave %d\n", __func__, r);
 	return r;
 }
@@ -1331,12 +1390,24 @@ static int wcd_mbhc_initialise(struct wcd_mbhc *mbhc)
 	/* program HS_VREF value */
 	wcd_program_hs_vref(mbhc);
 
+#ifdef CONFIG_MACH_OPPO
+	WCD_MBHC_REG_UPDATE_BITS(WCD_MBHC_HS_VREF, 3);
+#endif
+
 	wcd_program_btn_threshold(mbhc, false);
 
 
 	reinit_completion(&mbhc->btn_press_compl);
 
 	WCD_MBHC_RSC_UNLOCK(mbhc);
+
+#ifdef CONFIG_MACH_OPPO
+	if (!headset_detect_inited) {
+		headset_detect_inited = 1;
+		wakeup_source_init(&headset_detect, "headset_detect");
+	}
+#endif
+
 	pr_debug("%s: leave\n", __func__);
 	return ret;
 }
@@ -1956,6 +2027,17 @@ int wcd_mbhc_init(struct wcd_mbhc *mbhc, struct snd_soc_codec *codec,
 				__func__);
 			return ret;
 		}
+
+#ifdef CONFIG_MACH_OPPO
+		ret = snd_jack_set_key(mbhc->button_jack.jack,
+				       SND_JACK_BTN_4,
+				       KEY_VOLUMEUP);
+		if (ret) {
+			pr_err("%s: Failed to set code for btn-4\n",
+				__func__);
+			return ret;
+		}
+#endif
 
 		INIT_DELAYED_WORK(&mbhc->mbhc_firmware_dwork,
 				  wcd_mbhc_fw_read);

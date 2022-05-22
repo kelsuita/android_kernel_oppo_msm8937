@@ -89,6 +89,12 @@ struct msm_asoc_mach_data {
 	struct device_node *dmic_gpio_p; /* used by pinctrl API */
 	struct snd_soc_codec *codec;
 	struct snd_info_entry *codec_root;
+#ifdef CONFIG_MACH_16061
+	int spk_pa_en_gpio;
+	int spk_boost_en_gpio;
+	int hp_pa_en_gpio;
+	struct regulator *hp_pa_vdd;
+#endif
 };
 
 #endif/*__MSM8953_H*/

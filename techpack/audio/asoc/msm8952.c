@@ -61,6 +61,11 @@ static int mi2s_rx_bit_format = SNDRV_PCM_FORMAT_S16_LE;
 static int mi2s_rx_bits_per_sample = 16;
 static int mi2s_rx_sample_rate = SAMPLING_RATE_48KHZ;
 
+#ifdef CONFIG_MACH_16061
+int oppo_spk_pa_on;
+int oppo_hp_pa_on;
+#endif
+
 static atomic_t quat_mi2s_clk_ref;
 static atomic_t quin_mi2s_clk_ref;
 static atomic_t auxpcm_mi2s_clk_ref;
@@ -327,6 +332,7 @@ int is_ext_spk_gpio_support(struct platform_device *pdev,
 			return -EINVAL;
 		}
 	}
+
 	return 0;
 }
 
@@ -1054,6 +1060,125 @@ static const struct soc_enum msm_snd_enum[] = {
 				mi2s_rx_sample_rate_text),
 };
 
+#ifdef CONFIG_MACH_16061
+static char const *oppo_spk_pa_text[] = {"DISABLE", "ENABLE"};
+static char const *oppo_hp_pa_text[] = {"DISABLE", "ENABLE"};
+
+static const struct soc_enum oppo_audio_enum[] = {
+	SOC_ENUM_SINGLE_EXT(ARRAY_SIZE(oppo_spk_pa_text), oppo_spk_pa_text),
+	SOC_ENUM_SINGLE_EXT(ARRAY_SIZE(oppo_hp_pa_text), oppo_hp_pa_text),
+};
+
+int oppo_spk_pa_get(struct snd_kcontrol *kcontrol,
+	struct snd_ctl_elem_value *ucontrol)
+{
+	pr_debug("%s: oppo_spk_pa_on = %d\n", __func__, oppo_spk_pa_on);
+	ucontrol->value.integer.value[0] = oppo_spk_pa_on;
+
+	return 0;
+}
+
+int oppo_spk_pa_enable(struct snd_soc_codec *codec, int enable)
+{
+	struct msm_asoc_mach_data *pdata = NULL;
+
+	pdata = snd_soc_card_get_drvdata(codec->component.card);
+
+	if (!gpio_is_valid(pdata->spk_pa_en_gpio)) {
+		pr_err("%s: Invalid gpio: %d", __func__, pdata->spk_pa_en_gpio);
+		return -EINVAL;
+	}
+
+	if (!gpio_is_valid(pdata->spk_boost_en_gpio)) {
+		pr_err("%s: Invalid gpio: %d", __func__, pdata->spk_boost_en_gpio);
+		return -EINVAL;
+	}
+
+	switch (enable) {
+		case 1:
+			pr_debug("%s: enable pa\n", __func__);
+			gpio_direction_output(pdata->spk_boost_en_gpio, 1);
+			usleep_range(1000, 1050);
+			gpio_direction_output(pdata->spk_pa_en_gpio, 1);
+			oppo_spk_pa_on = 1;
+			break;
+		case 0:
+		default:
+			pr_debug("%s: disable pa\n", __func__);
+			gpio_direction_output(pdata->spk_pa_en_gpio, 0);
+			usleep_range(1000, 1050);
+			gpio_direction_output(pdata->spk_boost_en_gpio, 0);
+			oppo_spk_pa_on = 0;
+			break;
+	}
+	pr_debug("%s: oppo_spk_pa_on = %d\n", __func__, oppo_spk_pa_on);
+
+	return 0;
+}
+
+int oppo_spk_pa_put(struct snd_kcontrol *kcontrol,
+	struct snd_ctl_elem_value *ucontrol)
+{
+	struct snd_soc_codec *codec = snd_soc_kcontrol_codec(kcontrol);
+	int enable = ucontrol->value.integer.value[0];
+
+	return oppo_spk_pa_enable(codec, enable);
+}
+
+int oppo_hp_pa_get(struct snd_kcontrol *kcontrol,
+	struct snd_ctl_elem_value *ucontrol)
+{
+	pr_debug("%s: oppo_hp_pa_on = %d\n", __func__, oppo_hp_pa_on);
+	ucontrol->value.integer.value[0] = oppo_hp_pa_on;
+
+	return 0;
+}
+
+int oppo_hp_pa_enable(struct snd_soc_codec *codec, int enable)
+{
+	struct msm_asoc_mach_data *pdata = NULL;
+	struct snd_soc_card *card = codec->component.card;
+	struct device *cdev = card->dev;
+
+	pdata = snd_soc_card_get_drvdata(card);
+
+	if (!gpio_is_valid(pdata->hp_pa_en_gpio)) {
+		pr_err("%s: Invalid gpio: %d", __func__, pdata->hp_pa_en_gpio);
+		return -EINVAL;
+	}
+
+	switch (enable) {
+		case 1:
+			pr_debug("%s: enable pa\n", __func__);
+			if (regulator_enable(pdata->hp_pa_vdd))
+				dev_err(cdev, "%s: Failed to enable hp vdd\n", __func__);
+			gpio_direction_output(pdata->hp_pa_en_gpio, 1);
+			oppo_hp_pa_on = 1;
+			break;
+		case 0:
+		default:
+			pr_debug("%s: disable pa\n", __func__);
+			if (regulator_disable(pdata->hp_pa_vdd))
+				dev_err(cdev, "%s: Failed to disable hp vdd\n", __func__);
+			gpio_direction_output(pdata->hp_pa_en_gpio, 0);
+			oppo_hp_pa_on = 0;
+			break;
+	}
+	pr_debug("%s: oppo_hp_pa_on = %d\n", __func__, oppo_hp_pa_on);
+
+	return 0;
+}
+
+int oppo_hp_pa_put(struct snd_kcontrol *kcontrol,
+	struct snd_ctl_elem_value *ucontrol)
+{
+	struct snd_soc_codec *codec = snd_soc_kcontrol_codec(kcontrol);
+	int enable = ucontrol->value.integer.value[0];
+
+	return oppo_hp_pa_enable(codec, enable);
+}
+#endif
+
 static const struct snd_kcontrol_new msm_snd_controls[] = {
 	SOC_ENUM_EXT("MI2S_RX Format", msm_snd_enum[0],
 			mi2s_rx_bit_format_get, mi2s_rx_bit_format_put),
@@ -1071,6 +1196,13 @@ static const struct snd_kcontrol_new msm_snd_controls[] = {
 			msm_vi_feed_tx_ch_get, msm_vi_feed_tx_ch_put),
 	SOC_ENUM_EXT("MI2S_RX SampleRate", msm_snd_enum[6],
 			mi2s_rx_sample_rate_get, mi2s_rx_sample_rate_put),
+#ifdef CONFIG_MACH_16061
+	SOC_ENUM_EXT("Ext_SPK_Switch", oppo_audio_enum[0],
+			oppo_spk_pa_get, oppo_spk_pa_put),
+	SOC_ENUM_EXT("Ext_HP_Switch", oppo_audio_enum[1],
+			oppo_hp_pa_get, oppo_hp_pa_put),
+#endif
+
 };
 
 static int msm8952_enable_wsa_mclk(struct snd_soc_card *card, bool enable)
@@ -1517,7 +1649,11 @@ static void *def_msm8952_wcd_mbhc_cal(void)
 		return NULL;
 
 #define S(X, Y) ((WCD_MBHC_CAL_PLUG_TYPE_PTR(msm8952_wcd_cal)->X) = (Y))
+#ifdef CONFIG_MACH_OPPO
+	S(v_hs_max, 1700);
+#else
 	S(v_hs_max, 1500);
+#endif
 #undef S
 #define S(X, Y) ((WCD_MBHC_CAL_BTN_DET_PTR(msm8952_wcd_cal)->X) = (Y))
 	S(num_btn, WCD_MBHC_DEF_BUTTONS);
@@ -1540,6 +1676,23 @@ static void *def_msm8952_wcd_mbhc_cal(void)
 	 * 210-290 == Button 2
 	 * 360-680 == Button 3
 	 */
+#ifdef CONFIG_MACH_OPPO
+	btn_low[0] = 60;
+	btn_high[0] = 130;
+	btn_low[1] = 130;
+	btn_high[1] = 131;
+	btn_low[2] = 131;
+	btn_high[2] = 132;
+	btn_low[3] = 132;
+	btn_high[3] = 133;
+#if defined(CONFIG_MACH_16017) || defined(CONFIG_MACH_16027)
+	btn_low[4] = 240;
+	btn_high[4] = 315;
+#elif defined(CONFIG_MACH_16061)
+	btn_low[4] = 400;
+	btn_high[4] = 400;
+#endif
+#else
 	btn_low[0] = 75;
 	btn_high[0] = 75;
 	btn_low[1] = 150;
@@ -1550,6 +1703,7 @@ static void *def_msm8952_wcd_mbhc_cal(void)
 	btn_high[3] = 450;
 	btn_low[4] = 500;
 	btn_high[4] = 500;
+#endif
 
 	return msm8952_wcd_cal;
 }
@@ -2969,6 +3123,41 @@ int msm8952_init_wsa_switch_supply(struct platform_device *pdev,
 	return ret;
 }
 
+#ifdef CONFIG_MACH_16061
+int oppo_hp_pa_vdd_init(struct platform_device *pdev,
+		struct msm_asoc_mach_data *pdata)
+{
+	const char *hp_vdd_str = "oppo-hp-vdd";
+	struct device *dev = &pdev->dev;
+	int ret = 0;
+
+	pdata->hp_pa_vdd = devm_regulator_get(dev, hp_vdd_str);
+	ret = IS_ERR(pdata->hp_pa_vdd);
+	if (ret) {
+		dev_err(dev, "%s: Cannot get regulator for %s\n",
+					hp_vdd_str);
+		return ret;
+	}
+
+	ret = regulator_count_voltages(pdata->hp_pa_vdd);
+	if (ret < 0) {
+		dev_err(dev, "Cannot get regulator voltage for %s\n",
+					hp_vdd_str);
+		return ret;
+	}
+
+	ret = regulator_set_voltage(pdata->hp_pa_vdd,
+					2950000, 2950000);
+	if (ret) {
+		dev_err(dev, "Setting voltage failed for %s err = %d\n",
+					hp_vdd_str, ret);
+		return ret;
+	}
+
+	return ret;
+}
+#endif
+
 static struct snd_soc_card *msm8952_populate_sndcard_dailinks(
 						struct device *dev)
 {
@@ -3027,6 +3216,13 @@ static int msm8952_asoc_machine_probe(struct platform_device *pdev)
 	const char *wsa_str = NULL;
 	const char *wsa_prefix_str = NULL;
 	char *temp_str = NULL;
+#endif
+
+#ifdef CONFIG_MACH_16061
+	const char *spk_pa_str = "oppo-spk-pa-en";
+	const char *spk_boost_str = "oppo-spk-boost-en";
+	const char *hp_pa_str = "oppo-hp-pa-en";
+	const char *hp_vdd_str = "oppo-hp-vdd";
 #endif
 
 	pdata = devm_kzalloc(&pdev->dev,
@@ -3318,6 +3514,35 @@ parse_mclk_freq:
 		ret = -EPROBE_DEFER;
 		goto err;
 	}
+
+#ifdef CONFIG_MACH_16061
+	pdata->spk_pa_en_gpio = of_get_named_gpio(pdev->dev.of_node,
+							spk_pa_str, 0);
+	if (pdata->spk_pa_en_gpio < 0) {
+		dev_err(&pdev->dev, "%s: missing %s in dt node\n",
+			__func__, spk_pa_str);
+	}
+
+	pdata->spk_boost_en_gpio = of_get_named_gpio(pdev->dev.of_node,
+							spk_boost_str, 0);
+	if (pdata->spk_boost_en_gpio < 0) {
+		dev_err(&pdev->dev, "%s: missing %s in dt node\n",
+			__func__, spk_boost_str);
+	}
+
+	pdata->hp_pa_en_gpio = of_get_named_gpio(pdev->dev.of_node,
+							hp_pa_str, 0);
+	if (pdata->hp_pa_en_gpio < 0) {
+		dev_err(&pdev->dev, "%s: missing %s in dt node\n",
+			__func__, hp_pa_str);
+	}
+
+	ret = oppo_hp_pa_vdd_init(pdev, pdata);
+	if (ret < 0) {
+		dev_err(&pdev->dev, "%s: failed to init %s supply %d\n",
+			__func__, hp_vdd_str, ret);
+	}
+#endif
 
 	ret = devm_snd_soc_register_card(&pdev->dev, card);
 	if (ret) {

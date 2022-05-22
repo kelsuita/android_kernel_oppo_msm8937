@@ -140,7 +140,13 @@ do {                                                    \
 #define OCP_ATTEMPT 20
 #define HS_DETECT_PLUG_TIME_MS (3 * 1000)
 #define SPECIAL_HS_DETECT_TIME_MS (2 * 1000)
+
+#ifdef CONFIG_MACH_OPPO
+#define MBHC_BUTTON_PRESS_THRESHOLD_MIN 1200
+#else
 #define MBHC_BUTTON_PRESS_THRESHOLD_MIN 250
+#endif
+
 #define GND_MIC_SWAP_THRESHOLD 4
 #define GND_MIC_USBC_SWAP_THRESHOLD 2
 #define WCD_FAKE_REMOVAL_MIN_PERIOD_MS 100
@@ -153,6 +159,12 @@ do {                                                    \
 #define WCD_MBHC_BTN_PRESS_COMPL_TIMEOUT_MS  50
 #define ANC_DETECT_RETRY_CNT 7
 #define WCD_MBHC_SPL_HS_CNT  1
+
+#ifdef CONFIG_MACH_OPPO
+static struct wakeup_source headset_detect;
+static int headset_detect_inited = 0;
+static unsigned long delay_correct;
+#endif
 
 enum wcd_mbhc_detect_logic {
 	WCD_DETECTION_LEGACY,

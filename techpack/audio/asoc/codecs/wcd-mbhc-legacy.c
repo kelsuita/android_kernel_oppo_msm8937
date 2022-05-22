@@ -120,6 +120,7 @@ exit:
 	return anc_mic_found;
 }
 
+#ifndef CONFIG_MACH_OPPO
 /* To determine if cross connection occurred */
 static int wcd_check_cross_conn(struct wcd_mbhc *mbhc)
 {
@@ -173,6 +174,7 @@ static int wcd_check_cross_conn(struct wcd_mbhc *mbhc)
 
 	return (plug_type == MBHC_PLUG_TYPE_GND_MIC_SWAP) ? true : false;
 }
+#endif
 
 static bool wcd_is_special_headset(struct wcd_mbhc *mbhc)
 {
@@ -317,7 +319,11 @@ static void wcd_enable_mbhc_supply(struct wcd_mbhc *mbhc,
 				wcd_enable_curr_micbias(mbhc,
 						WCD_MBHC_EN_PULLUP);
 			} else {
+#ifdef CONFIG_MACH_OPPO
+				wcd_enable_curr_micbias(mbhc, WCD_MBHC_EN_MB);
+#else
 				wcd_enable_curr_micbias(mbhc, WCD_MBHC_EN_CS);
+#endif
 			}
 		} else if (plug_type == MBHC_PLUG_TYPE_HEADPHONE) {
 			wcd_enable_curr_micbias(mbhc, WCD_MBHC_EN_CS);
@@ -431,6 +437,9 @@ static void wcd_mbhc_detect_plug_type(struct wcd_mbhc *mbhc)
 
 	/* Re-initialize button press completion object */
 	reinit_completion(&mbhc->btn_press_compl);
+#ifdef CONFIG_MACH_OPPO
+	delay_correct = jiffies + msecs_to_jiffies(5000);
+#endif
 	wcd_schedule_hs_detect_plug(mbhc, &mbhc->correct_plug_swch);
 	pr_debug("%s: leave\n", __func__);
 }
@@ -448,10 +457,17 @@ static void wcd_correct_swch_plug(struct work_struct *work)
 	bool is_pa_on = false, spl_hs = false, spl_hs_reported = false;
 	bool micbias2 = false;
 	bool micbias1 = false;
+#ifndef CONFIG_MACH_OPPO
 	int ret = 0;
+#endif
 	int rc, spl_hs_count = 0;
 	int cross_conn;
 	int try = 0;
+
+#ifdef CONFIG_MACH_OPPO
+	int headset_count = 0;
+	int headphone_count = 0;
+#endif
 
 	pr_debug("%s: enter\n", __func__);
 
@@ -466,10 +482,19 @@ static void wcd_correct_swch_plug(struct work_struct *work)
 	 * no need to enabale micbias/pullup here
 	 */
 
+#ifdef CONFIG_MACH_OPPO
+	wcd_enable_curr_micbias(mbhc, WCD_MBHC_EN_CS);
+#else
 	wcd_enable_curr_micbias(mbhc, WCD_MBHC_EN_MB);
+#endif
 
 	/* Enable HW FSM */
 	WCD_MBHC_REG_UPDATE_BITS(WCD_MBHC_FSM_EN, 1);
+
+#ifdef CONFIG_MACH_OPPO
+	WCD_MBHC_REG_UPDATE_BITS(WCD_MBHC_BTN_ISRC_CTL, 3);
+#endif
+
 	/*
 	 * Check for any button press interrupts before starting 3-sec
 	 * loop.
@@ -495,6 +520,11 @@ static void wcd_correct_swch_plug(struct work_struct *work)
 			plug_type = MBHC_PLUG_TYPE_INVALID;
 	}
 
+#ifdef CONFIG_MACH_OPPO
+	if ((plug_type == MBHC_PLUG_TYPE_HEADSET) &&
+		(!wcd_swch_level_remove(mbhc)))
+		goto report;
+#else
 	do {
 		cross_conn = wcd_check_cross_conn(mbhc);
 		try++;
@@ -525,6 +555,7 @@ static void wcd_correct_swch_plug(struct work_struct *work)
 	}
 
 correct_plug_type:
+#endif
 
 	timeout = jiffies + msecs_to_jiffies(HS_DETECT_PLUG_TIME_MS);
 	while (!time_after(jiffies, timeout)) {
@@ -592,6 +623,7 @@ correct_plug_type:
 			}
 		}
 
+#ifndef CONFIG_MACH_OPPO
 		if ((!hs_comp_res) && (!is_pa_on)) {
 			/* Check for cross connection*/
 			ret = wcd_check_cross_conn(mbhc);
@@ -643,12 +675,16 @@ correct_plug_type:
 				}
 			}
 		}
+#endif
 
 		WCD_MBHC_REG_READ(WCD_MBHC_HPHL_SCHMT_RESULT, hphl_sch);
 		WCD_MBHC_REG_READ(WCD_MBHC_MIC_SCHMT_RESULT, mic_sch);
 		if (hs_comp_res && !(hphl_sch || mic_sch)) {
 			pr_debug("%s: cable is extension cable\n", __func__);
 			plug_type = MBHC_PLUG_TYPE_HIGH_HPH;
+#ifdef CONFIG_MACH_OPPO
+			continue;
+#endif
 			wrk_complete = true;
 		} else {
 			pr_debug("%s: cable might be headset: %d\n", __func__,
@@ -670,20 +706,36 @@ correct_plug_type:
 				 * and if there is not button press without
 				 * release
 				 */
+#ifdef CONFIG_MACH_OPPO
+				if (!wcd_swch_level_remove(mbhc) &&
+					!mbhc->btn_press_intr) {
+#else
 				if (((mbhc->current_plug !=
 				      MBHC_PLUG_TYPE_HEADSET) &&
 				     (mbhc->current_plug !=
 				      MBHC_PLUG_TYPE_ANC_HEADPHONE)) &&
 				    !wcd_swch_level_remove(mbhc) &&
 				    !mbhc->btn_press_intr) {
+#endif
 					pr_debug("%s: cable is %sheadset\n",
 						__func__,
 						((spl_hs_count ==
 							WCD_MBHC_SPL_HS_CNT) ?
 							"special ":""));
+#ifdef CONFIG_MACH_OPPO
+					if (++headset_count != 2) continue;
+#endif
 					goto report;
 				}
 			}
+
+#ifdef CONFIG_MACH_OPPO
+			if (headphone_count == 4) {
+				plug_type = MBHC_PLUG_TYPE_HEADPHONE;
+				goto report;
+			}
+#endif
+
 			wrk_complete = false;
 		}
 	}
@@ -702,6 +754,12 @@ correct_plug_type:
 	 */
 	if (!wrk_complete && ((plug_type == MBHC_PLUG_TYPE_HEADSET) ||
 	    (plug_type == MBHC_PLUG_TYPE_ANC_HEADPHONE))) {
+#ifdef CONFIG_MACH_OPPO
+		if (plug_type == MBHC_PLUG_TYPE_HEADSET) {
+			pr_debug("%s: need to report headset detect\n", __func__);
+			goto report;
+		}
+#endif
 		pr_debug("%s: plug_type:0x%x already reported\n",
 			 __func__, mbhc->current_plug);
 		goto enable_supply;
@@ -731,8 +789,35 @@ report:
 			__func__, plug_type, wrk_complete,
 			mbhc->btn_press_intr);
 	WCD_MBHC_RSC_LOCK(mbhc);
+#ifdef CONFIG_MACH_OPPO
+	if (mbhc->current_plug != plug_type) {
+		if (mbhc->current_plug == MBHC_PLUG_TYPE_HEADSET
+			&& plug_type == MBHC_PLUG_TYPE_HEADPHONE) {
+			msleep(200);
+			if (!wcd_swch_level_remove(mbhc))
+				wcd_mbhc_report_plug(mbhc, 0, SND_JACK_HEADSET);
+		}
+
+		if (!wcd_swch_level_remove(mbhc))
+			wcd_mbhc_find_plug_and_report(mbhc, plug_type);
+	}
+#else
 	wcd_mbhc_find_plug_and_report(mbhc, plug_type);
+#endif
 	WCD_MBHC_RSC_UNLOCK(mbhc);
+#ifdef CONFIG_MACH_OPPO
+	msleep(500);
+	if (!time_after(jiffies, delay_correct)
+		&& plug_type == MBHC_PLUG_TYPE_HEADPHONE) {
+		pr_err("%s: before call correct_plug_swch again\n", __func__);
+		WCD_MBHC_RSC_LOCK(mbhc);
+		wcd_schedule_hs_detect_plug(mbhc, &mbhc->correct_plug_swch);
+		msleep(10);
+		mbhc->mbhc_cb->lock_sleep(mbhc, false);
+		WCD_MBHC_RSC_UNLOCK(mbhc);
+		return;
+	}
+#endif
 enable_supply:
 	if (mbhc->mbhc_cb->mbhc_micbias_control)
 		wcd_mbhc_update_fsm_source(mbhc, plug_type);

@@ -33,6 +33,11 @@
 #include "msm-analog-cdc-regmap.h"
 #include "../wcd-mbhc-v2-api.h"
 
+#ifdef CONFIG_MACH_16061
+extern int oppo_spk_pa_enable(struct snd_soc_codec *codec, int enable);
+extern int oppo_hp_pa_enable(struct snd_soc_codec *codec, int enable);
+#endif
+
 #define DRV_NAME "pmic_analog_codec"
 #define SDM660_CDC_RATES (SNDRV_PCM_RATE_8000 | SNDRV_PCM_RATE_16000 |\
 			SNDRV_PCM_RATE_32000 | SNDRV_PCM_RATE_44100 |\
@@ -58,7 +63,12 @@
 #define SPK_PMD 2
 #define SPK_PMU 3
 
+#ifdef CONFIG_MACH_OPPO
+#define MICBIAS_DEFAULT_VAL 2700000
+#else
 #define MICBIAS_DEFAULT_VAL 1800000
+#endif
+
 #define MICBIAS_MIN_VAL 1600000
 #define MICBIAS_STEP_SIZE 50000
 
@@ -489,6 +499,12 @@ static int msm_anlg_cdc_mbhc_map_btn_code_to_num(struct snd_soc_codec *codec)
 		btn = -EINVAL;
 		break;
 	};
+
+#ifdef CONFIG_MACH_OPPO
+	if (btn != 4 && btn != EINVAL)
+		btn = 0;
+	dev_dbg(codec->dev, "%s: btn is %d", __func__, btn);
+#endif
 
 	return btn;
 }
@@ -2281,8 +2297,14 @@ static int msm_anlg_cdc_codec_enable_spk_pa(struct snd_soc_dapm_widget *w,
 		msm_anlg_cdc_dig_notifier_call(codec,
 					       DIG_CDC_EVENT_RX3_MUTE_OFF);
 		snd_soc_update_bits(codec, w->reg, 0x80, 0x80);
+#ifdef CONFIG_MACH_16061
+		oppo_spk_pa_enable(codec, 1);
+#endif
 		break;
 	case SND_SOC_DAPM_PRE_PMD:
+#ifdef CONFIG_MACH_16061
+		oppo_spk_pa_enable(codec, 0);
+#endif
 		msm_anlg_cdc_dig_notifier_call(codec,
 					       DIG_CDC_EVENT_RX3_MUTE_ON);
 		/*
@@ -2931,13 +2953,22 @@ static int msm_anlg_cdc_hph_pa_event(struct snd_soc_dapm_widget *w,
 	struct sdm660_cdc_priv *sdm660_cdc =
 					snd_soc_codec_get_drvdata(codec);
 
+#ifdef CONFIG_MACH_OPPO
+	struct wcd_mbhc *mbhc = &sdm660_cdc->mbhc;
+#endif
+
 	dev_dbg(codec->dev, "%s: %s event = %d\n", __func__, w->name, event);
 
 	switch (event) {
 	case SND_SOC_DAPM_PRE_PMU:
 		if (w->shift == 5)
+#ifdef CONFIG_MACH_16061
+			set_bit(WCD_MBHC_EVENT_PA_HPHL,
+					&mbhc->event_state);
+#else
 			msm_anlg_cdc_notifier_call(codec,
 					WCD_EVENT_PRE_HPHL_PA_ON);
+#endif
 		else if (w->shift == 4)
 			msm_anlg_cdc_notifier_call(codec,
 					WCD_EVENT_PRE_HPHR_PA_ON);
@@ -2959,9 +2990,15 @@ static int msm_anlg_cdc_hph_pa_event(struct snd_soc_dapm_widget *w,
 			msm_anlg_cdc_dig_notifier_call(codec,
 					       DIG_CDC_EVENT_RX2_MUTE_OFF);
 		}
+#ifdef CONFIG_MACH_16061
+		oppo_hp_pa_enable(codec, 1);
+#endif
 		break;
 
 	case SND_SOC_DAPM_PRE_PMD:
+#ifdef CONFIG_MACH_16061
+		oppo_hp_pa_enable(codec, 0);
+#endif
 		if (w->shift == 5) {
 			msm_anlg_cdc_dig_notifier_call(codec,
 					       DIG_CDC_EVENT_RX1_MUTE_ON);
