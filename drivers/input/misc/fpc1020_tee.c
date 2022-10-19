@@ -45,7 +45,6 @@
 #include <linux/of_gpio.h>
 #include <linux/regulator/consumer.h>
 #include <linux/pinctrl/consumer.h>
-#include <linux/wakelock.h>
 #include <soc/qcom/scm.h>
 
 #define FPC1020_NAME "fpc1020"
@@ -83,9 +82,9 @@ struct fpc1020_data {
 	struct pinctrl			*ts_pinctrl;
 	struct pinctrl_state	*gpio_state_active;
 	struct pinctrl_state	*gpio_state_suspend;
-	struct wake_lock		ttw_wl;
-	struct wake_lock		fpc_wl;
-	struct wake_lock		fpc_irq_wl;
+	struct wakeup_source		ttw_wl;
+	struct wakeup_source		fpc_wl;
+	struct wakeup_source		fpc_irq_wl;
 	struct regulator		*vreg[ARRAY_SIZE(vreg_conf)];
 	struct input_handler input_handler;
 
@@ -279,13 +278,13 @@ static ssize_t wakelock_enable_set(struct device *dev,
 	struct fpc1020_data *fpc1020 = dev_get_drvdata(dev);
 	if (sscanf(buffer, "%d", &op) == 1) {
 		if (op == WAKELOCK_ENABLE)
-			 wake_lock(&fpc1020->fpc_wl);
+			 __pm_stay_awake(&fpc1020->fpc_wl);
 		else if (op == WAKELOCK_DISABLE)
-			 wake_unlock(&fpc1020->fpc_wl);
+			 __pm_relax(&fpc1020->fpc_wl);
 		else if (op == WAKELOCK_TIMEOUT_ENABLE)
-			 wake_lock_timeout(&fpc1020->ttw_wl, msecs_to_jiffies(FPC_TTW_HOLD_TIME));
+			 __pm_wakeup_event(&fpc1020->ttw_wl, msecs_to_jiffies(FPC_TTW_HOLD_TIME));
 		else if (op == WAKELOCK_TIMEOUT_DISABLE)
-			 wake_unlock(&fpc1020->ttw_wl);
+			 __pm_relax(&fpc1020->ttw_wl);
 	} else {
 		dev_err(dev, "invalid content: '%s', length = %zd\n", buffer, count);
 		return -EINVAL;
@@ -320,7 +319,7 @@ static irqreturn_t fpc1020_irq_handler(int irq, void *handle)
 	** since this is interrupt context (other thread...) */
 	smp_rmb();
 
-	wake_lock_timeout(&fpc1020->fpc_irq_wl, msecs_to_jiffies(FPC_IRQ_WAKELOCK_TIMEOUT));
+	__pm_wakeup_event(&fpc1020->fpc_irq_wl, msecs_to_jiffies(FPC_IRQ_WAKELOCK_TIMEOUT));
 
 	sysfs_notify(&fpc1020->dev->kobj, NULL, dev_attr_irq.attr.name);
 
@@ -440,9 +439,9 @@ static int fpc1020_probe(struct platform_device *pdev)
 	disable_irq_nosync(gpio_to_irq(fpc1020->irq_gpio));
 	fpc1020->irq_enabled = 0;
 
-	wake_lock_init(&fpc1020->ttw_wl, WAKE_LOCK_SUSPEND, "fpc_ttw_wl");
-	wake_lock_init(&fpc1020->fpc_wl, WAKE_LOCK_SUSPEND, "fpc_wl");
-	wake_lock_init(&fpc1020->fpc_irq_wl, WAKE_LOCK_SUSPEND, "fpc_irq_wl");
+	wakeup_source_init(&fpc1020->ttw_wl, "fpc_ttw_wl");
+	wakeup_source_init(&fpc1020->fpc_wl, "fpc_wl");
+	wakeup_source_init(&fpc1020->fpc_irq_wl, "fpc_irq_wl");
 
 	fpc1020->input_handler.filter = input_filter;
 	fpc1020->input_handler.connect = input_connect;
