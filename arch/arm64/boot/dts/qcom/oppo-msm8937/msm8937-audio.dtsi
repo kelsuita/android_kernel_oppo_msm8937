@@ -42,6 +42,7 @@
 				"PDM_IN_RX1", "PDM_OUT_RX1",
 				"PDM_IN_RX2", "PDM_OUT_RX2",
 				"PDM_IN_RX3", "PDM_OUT_RX3";
+		qcom,use-legacy-voice-cpu-dais;
 
 		oppo-spk-pa-en = <&tlmm 86 0x00>;
 		oppo-spk-boost-en = <&tlmm 85 0x00>;
