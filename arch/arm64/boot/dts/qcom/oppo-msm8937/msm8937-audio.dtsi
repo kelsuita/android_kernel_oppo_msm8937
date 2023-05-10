@@ -11,6 +11,10 @@
  * GNU General Public License for more details.
  */
 
+/ {
+	qcom,enable-legacy-adsp-hacks;
+};
+
 &soc {
 	int_codec: sound {
 		/delete-property/ qcom,cdc-us-euro-gpios;
