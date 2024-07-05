@@ -285,6 +285,7 @@ Optional Properties:
 - qcom,max-pulse-allowed	The maximum number of pulses allowed in
 				HVDCP3 mode. It can be used to restrict VBUS
 				to a value.
+- qcom,hvdcp-not-supported	A boolean property to indicate that HVDCP is not supported.
 
 Example:
 	qcom,qpnp-smbcharger {

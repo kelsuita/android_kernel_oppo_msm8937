@@ -7723,6 +7723,9 @@ static int smb_parse_dt(struct smbchg_chip *chip)
 
 	chip->otg_pinctrl = of_property_read_bool(node, "qcom,otg-pinctrl");
 
+	chip->hvdcp_not_supported = of_property_read_bool(node,
+				"qcom,hvdcp-not-supported");
+
 	return 0;
 }
 
