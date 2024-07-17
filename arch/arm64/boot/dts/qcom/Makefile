@@ -1,3 +1,4 @@
+ifneq ($(CONFIG_MACH_OPPO),y)
 dtb-$(CONFIG_ARCH_QCOM)	+= apq8016-sbc.dtb msm8916-mtp.dtb
 dtb-$(CONFIG_ARCH_QCOM)	+= msm8996-mtp.dtb
 dtb-$(CONFIG_ARCH_QCOM)	+= apq8096-db820c.dtb
@@ -673,6 +674,10 @@ dtb-$(CONFIG_ARCH_SDM429) += sdm429-mtp.dtb \
 endif
 
 dtb-$(CONFIG_ARCH_SDM845_VM) += sdm845-vm.dtb
+
+endif # CONFIG_MACH_OPPO
+
+dtb-$(CONFIG_MACH_16061) += msm8940-pmi8950-mtp_16061.dtb
 
 always		:= $(dtb-y)
 subdir-y	:= $(dts-dirs)
