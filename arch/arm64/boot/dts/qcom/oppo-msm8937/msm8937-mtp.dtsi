@@ -96,16 +96,6 @@
 
 &mdss_dsi1 {
 	status = "disabled";
-	qcom,dsi-pref-prim-pan = <&dsi_tianma_oppo16061_hx8394f_720p_video>;
-	pinctrl-names = "mdss_default", "mdss_sleep";
-	pinctrl-0 = <&mdss_dsi_active &mdss_te_active>;
-	pinctrl-1 = <&mdss_dsi_suspend &mdss_te_suspend>;
-
-	qcom,platform-te-gpio = <&tlmm 24 0>;
-	qcom,platform-reset-gpio = <&tlmm 60 0>;
-	qcom,platform-enable-gpio = <&tlmm 48 0>; /* 5V ENP */
-	qcom,platform-bklight-en-gpio = <&tlmm 63 0>; /* -5V ENN */
-	qcom,platform-ldo-1p8-gpio = <&tlmm 62 0>; /* ldo 1.8V */
 };
 
 &dsi_boe_oppo16061_hx8394f_720p_video {

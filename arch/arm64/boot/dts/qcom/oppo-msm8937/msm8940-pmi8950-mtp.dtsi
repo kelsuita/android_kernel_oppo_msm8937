@@ -13,7 +13,7 @@
 
 #include "msm8940.dtsi"
 #include "msm8937-pmi8950-mtp.dtsi"
-#include "msm8940-mtp.dtsi"
+#include "msm8937-mtp.dtsi"
 
 &soc {
 };

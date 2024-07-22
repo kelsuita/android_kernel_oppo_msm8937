@@ -17,29 +17,3 @@
 #include "dsi-panel-oppo16061boe_nt35521s_b8_720p_video.dtsi"
 #include "dsi-panel-dsi-panel-oppo16061truly_nt35521s_720p_video.dtsi"
 #include "dsi-panel-oppo16061truly_hx8394f_new_720p_video.dtsi"
-
-&soc {
-	dsi_panel_pwr_supply: dsi_panel_pwr_supply {
-		#address-cells = <1>;
-		#size-cells = <0>;
-
-		qcom,panel-supply-entry@0 {
-			reg = <0>;
-			qcom,supply-name = "vdd";
-			qcom,supply-min-voltage = <2850000>;
-			qcom,supply-max-voltage = <2850000>;
-			qcom,supply-enable-load = <100000>;
-			qcom,supply-disable-load = <100>;
-		};
-
-		qcom,panel-supply-entry@1 {
-			reg = <1>;
-			qcom,supply-name = "vddio";
-			qcom,supply-min-voltage = <1800000>;
-			qcom,supply-max-voltage = <1800000>;
-			qcom,supply-enable-load = <100000>;
-			qcom,supply-disable-load = <100>;
-		};
-
-	};
-};
