@@ -584,7 +584,9 @@ void wcd_mbhc_report_plug(struct wcd_mbhc *mbhc, int insertion,
 {
 	struct snd_soc_codec *codec = mbhc->codec;
 	bool is_pa_on = false;
+#ifndef CONFIG_MACH_OPPO
 	u8 fsm_en = 0;
+#endif
 
 	WCD_MBHC_RSC_ASSERT_LOCKED(mbhc);
 

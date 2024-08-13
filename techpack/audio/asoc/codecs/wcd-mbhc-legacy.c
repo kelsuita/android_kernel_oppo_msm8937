@@ -452,8 +452,10 @@ static void wcd_correct_swch_plug(struct work_struct *work)
 	unsigned long timeout;
 	u16 hs_comp_res = 0, hphl_sch = 0, mic_sch = 0, btn_result = 0;
 	bool wrk_complete = false;
+#ifndef CONFIG_MACH_OPPO
 	int pt_gnd_mic_swap_cnt = 0;
 	int no_gnd_mic_swap_cnt = 0;
+#endif
 	bool is_pa_on = false, spl_hs = false, spl_hs_reported = false;
 	bool micbias2 = false;
 	bool micbias1 = false;
@@ -461,8 +463,10 @@ static void wcd_correct_swch_plug(struct work_struct *work)
 	int ret = 0;
 #endif
 	int rc, spl_hs_count = 0;
+#ifndef CONFIG_MACH_OPPO
 	int cross_conn;
 	int try = 0;
+#endif
 
 #ifdef CONFIG_MACH_OPPO
 	int headset_count = 0;
