@@ -1696,8 +1696,10 @@ static int smbchg_set_usb_current_max(struct smbchg_chip *chip,
 
 	if (current_ma <= SUSPEND_CURRENT_MA) {
 		/* suspend the usb if current <= 2mA */
+#ifndef CONFIG_MACH_OPPO
 		rc = vote(chip->usb_suspend_votable, USB_EN_VOTER, true, 0);
 		chip->usb_max_current_ma = 0;
+#endif
 		goto out;
 	} else {
 		rc = vote(chip->usb_suspend_votable, USB_EN_VOTER, false, 0);
