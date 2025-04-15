@@ -27,17 +27,6 @@
 
 static struct v4l2_file_operations msm_sensor_v4l2_subdev_fops;
 static int32_t msm_sensor_driver_platform_probe(struct platform_device *pdev);
-#ifdef CONFIG_MACH_OPPO
-/* For module vendor info */
-extern int size_of_module_list;
-extern int size_of_sensor_list;
-extern uint16_t rear_sensor;
-extern uint16_t rear_module;
-extern uint16_t front_sensor;
-extern uint16_t front_module;
-extern struct int_string_pair cam_module_info[];
-extern struct int_string_pair cam_sensor_info[];
-#endif
 
 /* Static declaration */
 static struct msm_sensor_ctrl_t *g_sctrl[MAX_CAMERAS];
@@ -771,11 +760,6 @@ int32_t msm_sensor_driver_probe(void *setting,
 	struct msm_camera_i2c_reg_array     *reg_setting = NULL;
 	struct msm_sensor_id_info_t         *id_info = NULL;
 
-#ifdef CONFIG_MACH_OPPO
-	/* For module vendor info */
-	int i = 0;
-#endif
-
 	/* Validate input parameters */
 	if (!setting) {
 		pr_err("failed: slave_info %pK", setting);
@@ -1022,30 +1006,7 @@ int32_t msm_sensor_driver_probe(void *setting,
 			pr_err("slot %d has some other sensor\n",
 				slave_info->camera_id);
 
-#ifdef CONFIG_MACH_OPPO
-		/* Need match sensorID in sensor and eeprom */
-		for (i = 0; i < size_of_sensor_list; i++) {
-			if (strcmp(cam_sensor_info[i].string, s_ctrl->sensordata->sensor_name) == 0) {
-				if (((s_ctrl->sensordata->sensor_info->position == 0)
-					&& (cam_sensor_info[i].value == rear_sensor))
-					|| (rear_sensor == 0))
-					break;
-				else if (((s_ctrl->sensordata->sensor_info->position == 1)
-					&& (cam_sensor_info[i].value == front_sensor))
-					|| (front_sensor == 0))
-					break;
-			}
-		}
-		if (i >= size_of_sensor_list)
-			rc = -ENODEV;
-		else
-			rc = 0;
-
-		pr_err("%s:%d: %s mached result %d\n",
-			__func__, __LINE__, slave_info->sensor_name, rc);
-#else
 		rc = 0;
-#endif
 		goto free_slave_info;
 	}
 
@@ -1176,20 +1137,6 @@ CSID_TG:
 	}
 
 	pr_err("%s probe succeeded", slave_info->sensor_name);
-
-#ifdef CONFIG_MACH_OPPO
-	/* For 3p8 and 3p3sp compatibility */
-	if (strcmp(slave_info->sensor_name, "s5k3p3sp") == 0) {
-		int i = 0;
-		for (i = 0; i < s_ctrl->sensordata->power_info.num_vreg; i++) {
-			if (!strcmp(s_ctrl->sensordata->power_info.cam_vreg[i].reg_name, "cam_vdig")) {
-				s_ctrl->sensordata->power_info.cam_vreg[i].min_voltage = 1200000;
-				s_ctrl->sensordata->power_info.cam_vreg[i].max_voltage = 1200000;
-			break;
-			}
-		}
-	}
-#endif
 
 	/*
 	 * Create /dev/videoX node, comment for now until dummy /dev/videoX

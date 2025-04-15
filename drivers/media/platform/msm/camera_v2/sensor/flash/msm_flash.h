@@ -104,10 +104,6 @@ struct msm_flash_ctrl_t {
 	enum msm_camera_flash_state_t flash_state;
 	int32_t (*platform_flash_init)(struct msm_flash_ctrl_t *flash_ctrl,
 		struct msm_flash_cfg_data_t *flash_data);
-
-#ifdef CONFIG_MACH_OPPO
-	const char *flash_name;
-#endif
 };
 
 int msm_flash_i2c_probe(struct i2c_client *client,

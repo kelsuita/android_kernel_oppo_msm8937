@@ -64,12 +64,7 @@
 #define FALSE  0
 
 #define MAX_LANE_COUNT 4
-#ifndef CONFIG_MACH_OPPO
-/* For csid reset timeout */
 #define CSID_TIMEOUT msecs_to_jiffies(100)
-#else
-#define CSID_TIMEOUT msecs_to_jiffies(500)
-#endif
 
 #undef CDBG
 #define CDBG(fmt, args...) pr_debug(fmt, ##args)
