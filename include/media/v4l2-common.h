@@ -257,4 +257,8 @@ const struct v4l2_frmsize_discrete *v4l2_find_nearest_format(
 
 void v4l2_get_timestamp(struct timeval *tv);
 
+void v4l2_simplify_fraction(uint32_t *numerator, uint32_t *denominator,
+		unsigned int n_terms, unsigned int threshold);
+uint32_t v4l2_fraction_to_interval(uint32_t numerator, uint32_t denominator);
+
 #endif /* V4L2_COMMON_H_ */

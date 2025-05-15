@@ -7,6 +7,7 @@
 
 #include <linux/module.h>
 #include <linux/platform_device.h>
+#include <linux/dma-mapping.h>
 #include <linux/pm_runtime.h>
 #include <linux/usb/msm_hsusb_hw.h>
 #include <linux/usb/ulpi.h>
@@ -58,6 +59,9 @@ static int ci_hdrc_msm_probe(struct platform_device *pdev)
 	struct usb_phy *phy;
 
 	dev_dbg(&pdev->dev, "ci_hdrc_msm_probe\n");
+
+	if (dma_set_mask_and_coherent(&pdev->dev, DMA_BIT_MASK(64)))
+		dev_err(&pdev->dev, "Failed to set DMA mask to 64\n");
 
 	/*
 	 * OTG(PHY) driver takes care of PHY initialization, clock management,
