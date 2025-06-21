@@ -2953,7 +2953,7 @@ static int msm_anlg_cdc_hph_pa_event(struct snd_soc_dapm_widget *w,
 	struct sdm660_cdc_priv *sdm660_cdc =
 					snd_soc_codec_get_drvdata(codec);
 
-#ifdef CONFIG_MACH_OPPO
+#ifdef CONFIG_MACH_16061
 	struct wcd_mbhc *mbhc = &sdm660_cdc->mbhc;
 #endif
 
