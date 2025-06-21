@@ -123,6 +123,7 @@
 };
 
 &i2c_3 { /* BLSP1 QUP3 */
+	status = "okay";
 	synaptics15018@20 {
 		reg = <0x20>;
 		interrupt-parent = <&tlmm>;
