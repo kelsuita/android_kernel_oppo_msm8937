@@ -356,48 +356,6 @@
 			};
 		};
 
-		pmx_mdss: pmx_mdss {
-			mdss_dsi_active: mdss_dsi_active {
-				mux {
-					pins = "gpio41", "gpio131";
-				};
-
-				config {
-					pins = "gpio41", "gpio131";
-				};
-			};
-
-			mdss_dsi_suspend: mdss_dsi_suspend {
-				mux {
-					pins = "gpio41", "gpio131";
-				};
-
-				config {
-					pins = "gpio41", "gpio131";
-				};
-			};
-		};
-
-		pmx_mdss_te {
-			mdss_te_active: mdss_te_active {
-				mux {
-					pins = "gpio24", "gpio63", "gpio134";
-				};
-				config {
-					pins = "gpio24", "gpio63", "gpio134";
-				};
-			};
-
-			mdss_te_suspend: mdss_te_suspend {
-				mux {
-					pins = "gpio24", "gpio63", "gpio134";
-				};
-				config {
-					pins = "gpio24", "gpio63", "gpio134";
-				};
-			};
-		};
-
 		sim1_cd_on: sim1_cd_on {
 			mux {
 				pins = "gpio54";
