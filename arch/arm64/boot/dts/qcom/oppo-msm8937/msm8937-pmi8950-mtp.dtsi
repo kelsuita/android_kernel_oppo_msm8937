@@ -24,6 +24,12 @@
 		qcom,torch-source = <&pmi8950_torch0>;
 		qcom,switch-source = <&pmi8950_switch>;
 	};
+
+	dsi_panel_pwr_supply: dsi_panel_pwr_supply {
+		qcom,panel-supply-entry@3 {
+			qcom,supply-post-on-sleep = <20>;
+		};
+	};
 };
 
 &vendor {
@@ -54,6 +60,7 @@
 
 &labibb {
 	status = "ok";
+	qcom,qpnp-labibb-mode = "lcd";
 };
 
 &ibb_regulator {
