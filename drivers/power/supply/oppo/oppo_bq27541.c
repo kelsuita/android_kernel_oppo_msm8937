@@ -20,6 +20,8 @@
 #include <linux/regulator/driver.h>
 #include <linux/regulator/of_regulator.h>
 #include <linux/regulator/machine.h>
+
+#include <linux/power/oppo_gauge.h>
 #include <soc/oppo/device_info.h>
 
 //#include "oppo_vooc.h"
@@ -34,6 +36,9 @@ bool oppo_vooc_get_allow_reading(void)
 static struct i2c_client *new_client = NULL;
 static struct bms_bq27541 *bq27541_di = NULL;
 static DEFINE_MUTEX(bq27541_i2c_access);
+
+int fg_oppo_register(struct oppo_gauge_driver *);
+int fg_oppo_unregister(void);
 
 /**********************************************************
   *
@@ -646,9 +651,18 @@ static void gauge_set_cmd_addr(struct bms_bq27541 *di, int device_type)
 	}
 }
 
+static struct oppo_gauge_driver bq27541_batt_gauge = {
+	.capacity		= bq27541_get_battery_soc,
+	.temp			= bq27541_get_battery_temperature,
+	.current_now	= bq27541_get_average_current,
+	.voltage_now	= bq27541_get_battery_mvolts,
+};
+
 static void bq27541_hw_config(struct work_struct *work)
 {
 	int ret = 0, flags = 0, device_type = 0, fw_ver = 0;
+
+	fg_oppo_register(&bq27541_batt_gauge);
 
 	bq27541_cntl_cmd(BQ27541_BQ27411_SUBCMD_CTNL_STATUS);
 	udelay(66);
@@ -1158,6 +1172,8 @@ static int bq27541_suspend(struct i2c_client *client, pm_message_t mesg)
 
 static int bq27541_driver_remove(struct i2c_client *client)
 {
+	fg_oppo_unregister();
+
 	if (bq27541_di) {
 		bq27541_cntl_cmd(bq27541_di->cmd_addr.subcmd_disable_dlog);
 		udelay(66);
