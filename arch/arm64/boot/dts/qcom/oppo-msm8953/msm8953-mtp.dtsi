@@ -148,6 +148,7 @@
 };
 
 &i2c_5 { /* BLSP2 QUP1 */
+	status = "okay";
 	bq27541-battery@55 {
 		status = "okay";
 		compatible = "oppo,bq27541-battery";
