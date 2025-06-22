@@ -292,17 +292,16 @@ static int bq27541_soc_calibrate(int soc)
 	return soc_calib;
 }
 
-/*
- * Return the battery Voltage in milivolts
- * Or < 0 if something fails.
- */
-
 static void bq27541_cntl_cmd(int subcmd)
 {
 	bq27541_i2c_txsubcmd(BQ27541_BQ27411_REG_CNTL, subcmd);
 }
 
-static int bq27541_get_battery_mvolts(void)
+/*
+ * Return the battery Voltage in microvolts
+ * Or < 0 if something fails.
+ */
+static int bq27541_get_battery_voltage_micros(void)
 {
 	int ret;
 	int volt = 0;
@@ -424,8 +423,7 @@ read_soc_err:
 	}
 }
 
-
-static int bq27541_get_average_current(void)
+static int bq27541_get_battery_current_micros(void)
 {
 	int ret;
 	int curr = 0;
@@ -434,24 +432,26 @@ static int bq27541_get_average_current(void)
 		return 0;
 	}
 	if (atomic_read(&bq27541_di->suspended) == 1) {
-		return -bq27541_di->current_pre;
+		goto out;
 	}
 
 	if (oppo_vooc_get_allow_reading() == true) {
 		ret = bq27541_read_i2c(bq27541_di->cmd_addr.reg_ai, &curr);
 		if (ret) {
 			dev_err(bq27541_di->dev, "error reading current.\n");
-			return bq27541_di->current_pre;
+			goto out;
 		}
 	} else {
-		return -bq27541_di->current_pre;
+		goto out;
 	}
 	/* negative current */
 	if (curr&0x8000) {
 		curr = -((~(curr-1))&0xFFFF);
 	}
-	bq27541_di->current_pre = curr;
-	return -curr;
+	bq27541_di->current_pre = -curr * 1000;
+
+out:
+	return bq27541_di->current_pre;
 }
 
 static bool bq27541_get_battery_authenticate(void)
@@ -654,8 +654,8 @@ static void gauge_set_cmd_addr(struct bms_bq27541 *di, int device_type)
 static struct oppo_gauge_driver bq27541_batt_gauge = {
 	.capacity		= bq27541_get_battery_soc,
 	.temp			= bq27541_get_battery_temperature,
-	.current_now	= bq27541_get_average_current,
-	.voltage_now	= bq27541_get_battery_mvolts,
+	.current_now	= bq27541_get_battery_current_micros,
+	.voltage_now	= bq27541_get_battery_voltage_micros,
 };
 
 static void bq27541_hw_config(struct work_struct *work)
@@ -1093,15 +1093,15 @@ static void bq27541_reset(struct i2c_client *client)
 		ui_soc = val.intval;
 	}
 
-	if (bq27541_get_battery_mvolts() <= 3300 * 1000
-			&& bq27541_get_battery_mvolts() > 2500 * 1000
+	if (bq27541_get_battery_voltage_micros() <= 3300 * 1000
+			&& bq27541_get_battery_voltage_micros() > 2500 * 1000
 			&& ui_soc == 0
 			&& bq27541_get_battery_temperature() > 150) {
 		if (!unseal(BQ27541_UNSEAL_KEY)) {
 			pr_err("bq27541 unseal fail !\n");
 			return;
 		}
-		pr_debug("bq27541 unseal OK vol = %d, ui_soc = %d, temp = %d!\n", bq27541_get_battery_mvolts(),
+		pr_debug("bq27541 unseal OK vol = %d, ui_soc = %d, temp = %d!\n", bq27541_get_battery_voltage_micros(),
 		    ui_soc, bq27541_get_battery_temperature());
 
 		if (bq27541_di->device_type == DEVICE_BQ27541) {
@@ -1206,7 +1206,7 @@ static int bq27541_driver_probe(struct i2c_client *client, const struct i2c_devi
 
 	di->soc_pre = 50;
 	di->batt_vol_pre = 3800000;
-	di->current_pre = 999;
+	di->current_pre = -999000; // Assume battery is discharging
 	bq27411_modify_soc_smooth_parameter(di, true);
 
 	register_gauge_devinfo(di);
