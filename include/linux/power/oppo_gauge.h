@@ -11,12 +11,14 @@
  * struct oppo_gauge_driver - represent an OPPO fuel gauge device driver
  * @capacity: Function returning battery capacity
  * @temp: Function returning battery temperature
+ * @charge_now: Function returning battery charge in uAh
  * @current_now: Function returning battery current in uA
  * @voltage_now: Function returning battery voltage in uV
  */
 struct oppo_gauge_driver {
 	int (*capacity)(void);
 	int (*temp)(void);
+	int (*charge_now)(void);
 	int (*current_now)(void);
 	int (*voltage_now)(void);
 };

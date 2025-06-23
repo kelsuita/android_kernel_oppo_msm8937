@@ -362,7 +362,7 @@ static int bq27541_get_battery_temperature(void)
 	return temp + ZERO_DEGREE_CELSIUS_IN_TENTH_KELVIN;
 }
 
-static int bq27541_get_batt_remaining_capacity(void)
+static int bq27541_get_battery_charge_micros(void)
 {
 	int ret;
 	int cap = 0;
@@ -371,7 +371,7 @@ static int bq27541_get_batt_remaining_capacity(void)
 		return 0;
 	}
 	if (atomic_read(&bq27541_di->suspended) == 1) {
-		return bq27541_di->rm_pre;
+		goto out;
 	}
 	if (oppo_vooc_get_allow_reading() == true) {
 		ret = bq27541_read_i2c(bq27541_di->cmd_addr.reg_rm, &cap);
@@ -380,10 +380,13 @@ static int bq27541_get_batt_remaining_capacity(void)
 			return ret;
 		}
 		bq27541_di->rm_pre = cap;
-		return bq27541_di->rm_pre;
+		goto out;
 	} else {
-		return bq27541_di->rm_pre;
+		goto out;
 	}
+
+out:
+	return bq27541_di->rm_pre * 1000;
 }
 
 static int bq27541_get_battery_soc(void)
@@ -652,6 +655,7 @@ static void gauge_set_cmd_addr(struct bms_bq27541 *di, int device_type)
 static struct oppo_gauge_driver bq27541_batt_gauge = {
 	.capacity		= bq27541_get_battery_soc,
 	.temp			= bq27541_get_battery_temperature,
+	.charge_now		= bq27541_get_battery_charge_micros,
 	.current_now	= bq27541_get_battery_current_micros,
 	.voltage_now	= bq27541_get_battery_voltage_micros,
 };

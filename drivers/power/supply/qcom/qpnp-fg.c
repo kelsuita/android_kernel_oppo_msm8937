@@ -4675,6 +4675,10 @@ static int fg_power_get_property(struct power_supply *psy,
 		break;
 	case POWER_SUPPLY_PROP_CHARGE_NOW:
 		val->intval = chip->learning_data.cc_uah;
+#ifdef CONFIG_BATTERY_GAUGE_OPPO
+		if (oppo_gauge && oppo_gauge->charge_now)
+			val->intval = oppo_gauge->charge_now();
+#endif
 		break;
 	case POWER_SUPPLY_PROP_CHARGE_NOW_RAW:
 		val->intval = get_sram_prop_now(chip, FG_DATA_CC_CHARGE);
