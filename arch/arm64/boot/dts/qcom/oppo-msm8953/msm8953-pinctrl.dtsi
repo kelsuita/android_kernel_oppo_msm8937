@@ -63,8 +63,8 @@
 			};
 		};
 
-		charger: charger {
-			charging_switch1_active: charging_switch1_active {
+		vooc_charger_default: vooc_charger_default {
+			switch_default: switch_default {
 				mux {
 					pins = "gpio50";
 					function = "gpio";
@@ -73,89 +73,50 @@
 				config {
 					pins = "gpio50";
 					drive-strength = <2>; /* 2 MA */
-					bias-pull-up; /*  PULL  UP*/
+					bias-pull-up; /* PULL UP */
 				};
 			};
 
-			charging_switch1_sleep: charging_switch1_sleep {
+			chargerid_default: chargerid_default {
 				mux {
-					pins = "gpio50";
+					pins = "gpio9";
 					function = "gpio";
 				};
 
 				config {
-					pins = "gpio50";
-					drive-strength = <2>; /* 2 MA */
-					bias-pull-down; /* PULL DOWN */
-				};
-			};
-
-			charging_reset_active: charging_reset_active {
-				mux {
-					pins = "gpio94";
-					function = "gpio";
-				};
-
-				config {
-					pins = "gpio94";
-					drive-strength = <2>; /* 2 MA */
-					bias-pull-up; /*  PULL	UP*/
-				};
-			};
-
-			charging_reset_sleep: charging_reset_sleep {
-				mux {
-					pins = "gpio94";
-					function = "gpio";
-				};
-
-				config {
-					pins = "gpio94";
-					drive-strength = <2>; /* 2 MA */
-					bias-pull-down; /* PULL DOWN */
-				};
-			};
-
-			charging_clock_active: charging_clock_active {
-				mux {
-					pins = "gpio89";
-					function = "gpio";
-				};
-
-				config {
-					pins = "gpio89";
-					drive-strength = <2>; /* 2 MA */
-					bias-pull-up; /*  PULL	UP*/
-				};
-			};
-
-			charging_clock_sleep: charging_clock_sleep {
-				mux {
-					pins = "gpio89";
-					function = "gpio";
-				};
-
-				config {
-					pins = "gpio89";
-					drive-strength = <2>; /* 2 MA */
-					bias-pull-down; /* PULL DOWN */
-				};
-			};
-
-			charging_data_active: charging_data_active {
-				mux {
-					pins = "gpio90";
-					function = "gpio";
-				};
-
-				config {
-					pins = "gpio90";
+					pins = "gpio9";
 					drive-strength = <2>; /* 2 MA */
 					bias-disable; /* NO PULL */
 				};
 			};
 
-			charging_data_sleep: charging_data_sleep {
+			reset_default: reset_default {
+				mux {
+					pins = "gpio94";
+					function = "gpio";
+				};
+
+				config {
+					pins = "gpio94";
+					drive-strength = <2>; /* 2 MA */
+					bias-pull-up; /* PULL UP */
+				};
+			};
+
+			clock_default: clock_default {
+				mux {
+					pins = "gpio89";
+					function = "gpio";
+				};
+
+				config {
+					pins = "gpio89";
+					drive-strength = <2>; /* 2 MA */
+					bias-pull-up; /* PULL UP */
+				};
+			};
+
+			data_default: data_default {
 				mux {
 					pins = "gpio90";
 					function = "gpio";
@@ -164,45 +125,6 @@
 				config {
 					pins = "gpio90";
 					drive-strength = <2>; /* 2 MA */
-					bias-disable; /* NO PULL */
-				};
-			};
-
-			chargerid_switch_active: chargerid_switch_active {
-				mux {
-					pins = "gpio9";
-					function = "gpio";
-				};
-
-				config {
-					pins = "gpio9";
-					drive-strength = <2>;
-					bias-pull-up; /*  PULL	UP*/
-				};
-			};
-
-			chargerid_switch_sleep: chargerid_switch_sleep {
-				mux {
-					pins = "gpio9";
-					function = "gpio";
-				};
-
-				config {
-					pins = "gpio9";
-					drive-strength = <2>;
-					bias-pull-down; /* PULL DOWN */
-				};
-			};
-
-			chargerid_switch_default: chargerid_switch_default {
-				mux {
-					pins = "gpio9";
-					function = "gpio";
-				};
-
-				config {
-					pins = "gpio9";
-					drive-strength = <2>;
 					bias-disable; /* NO PULL */
 				};
 			};
