@@ -144,3 +144,7 @@
 &pm8953_l10 {
 	regulator-always-on;
 };
+
+&eldo2_8953 {
+	gpio = <&tlmm 64 0>;
+};
