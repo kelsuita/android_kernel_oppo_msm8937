@@ -15,4 +15,9 @@ config BATTERY_GAUGE_OPPO_BQ27541
 
 endif # BATTERY_GAUGE_OPPO
 
+menuconfig CHARGER_OPPO_VOOC
+	bool "OPPO VOOC charging technology"
+	help
+	  Support for OPPO VOOC charging technology.
+
 endmenu
