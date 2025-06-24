@@ -7,6 +7,8 @@
 #ifndef _OPPO_GAUGE_H_
 #define _OPPO_GAUGE_H_
 
+extern int bq27541_device_type;
+
 /**
  * struct oppo_gauge_driver - represent an OPPO fuel gauge device driver
  * @capacity: Function returning battery capacity

@@ -27,6 +27,13 @@
 //#include "oppo_vooc.h"
 #include "oppo_bq27541.h"
 
+/*
+ * bq27541_device_type: Represents the IC variant
+ * Value is initialized as bq27541_di->device_type
+ */
+int bq27541_device_type = -1;
+EXPORT_SYMBOL(bq27541_device_type);
+
 // FIXME: Hacks for compilation
 bool oppo_vooc_get_allow_reading(void)
 {
@@ -699,6 +706,7 @@ static void bq27541_hw_config(struct work_struct *work)
 		udelay(66);
 		bq27541_cntl_cmd(BQ27541_BQ27411_SUBCMD_ENABLE_IT);
 	}
+	bq27541_device_type = bq27541_di->device_type;
 	gauge_set_cmd_addr(bq27541_di, bq27541_di->device_type);
 	dev_err(bq27541_di->dev, "DEVICE_TYPE is 0x%02X, FIRMWARE_VERSION is 0x%02X\n",
 			device_type, fw_ver);
