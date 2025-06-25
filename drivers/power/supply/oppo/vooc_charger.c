@@ -154,7 +154,7 @@ static int vooc_probe(struct i2c_client *client,
 	i2c_set_clientdata(client, vooc);
 
 	vooc->switch_gpios = devm_gpiod_get_array(&client->dev,
-			"switch", GPIOD_OUT_HIGH);
+			"switch", GPIOD_OUT_LOW);
 	if (IS_ERR(vooc->switch_gpios)) {
 		rc = PTR_ERR(vooc->switch_gpios);
 		dev_err(&client->dev,
@@ -163,7 +163,7 @@ static int vooc_probe(struct i2c_client *client,
 	}
 
 	vooc->reset_gpio = devm_gpiod_get(&client->dev,
-				"reset", GPIOD_OUT_HIGH);
+				"reset", GPIOD_OUT_LOW);
 	if (IS_ERR(vooc->reset_gpio)) {
 		rc = PTR_ERR(vooc->reset_gpio);
 		dev_err(&client->dev,
@@ -172,7 +172,7 @@ static int vooc_probe(struct i2c_client *client,
 	}
 
 	vooc->clock_gpio = devm_gpiod_get(&client->dev,
-				"clock", GPIOD_OUT_HIGH);
+				"clock", GPIOD_OUT_LOW);
 	if (IS_ERR(vooc->clock_gpio)) {
 		rc = PTR_ERR(vooc->clock_gpio);
 		dev_err(&client->dev,
