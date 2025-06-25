@@ -1759,6 +1759,24 @@ done:
 	return 0;
 }
 
+#ifdef CONFIG_SND_SOC_AK4376
+static int ak4376_audrx_init(struct snd_soc_pcm_runtime *rtd)
+{
+
+	struct snd_soc_codec *codec = rtd->codec;
+	struct snd_soc_dapm_context *dapm = snd_soc_codec_get_dapm(codec);
+
+	pr_info("%s: Initialize ak4376 codec\n", __func__);
+
+	snd_soc_dapm_ignore_suspend(dapm, "AK4376 HPL");
+	snd_soc_dapm_ignore_suspend(dapm, "AK4376 HPR");
+
+	snd_soc_dapm_sync(dapm);
+
+    return 0;
+}
+#endif
+
 static struct snd_soc_ops msm8952_quat_mi2s_be_ops = {
 	.startup = msm_quat_mi2s_snd_startup,
 	.hw_params = msm_mi2s_snd_hw_params,
@@ -2826,8 +2844,14 @@ static struct snd_soc_dai_link msm8952_quin_dai_link[] = {
 		.stream_name = "Quinary MI2S Playback",
 		.cpu_dai_name = "msm-dai-q6-mi2s.4",
 		.platform_name = "msm-pcm-routing",
+#ifdef CONFIG_SND_SOC_AK4376
+		.codec_dai_name = "ak4376-AIF1",
+		.codec_name = "ak4376.8-0010",
+		.init = ak4376_audrx_init,
+#else
 		.codec_dai_name = "snd-soc-dummy-dai",
 		.codec_name = "snd-soc-dummy",
+#endif
 		.no_pcm = 1,
 		.dpcm_playback = 1,
 		.id = MSM_BACKEND_DAI_QUINARY_MI2S_RX,
