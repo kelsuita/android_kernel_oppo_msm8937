@@ -3744,7 +3744,6 @@ static int synapitcs_ts_update(struct i2c_client *client, const uint8_t *data, u
 
 static int charge_plug_status = 0 ;//0: no   1: slow  3:  quickly charge
 static atomic_t charge_plug_in_flag;
-extern void (*synaptics_chg_mode_enable)(int , int);
 static void synaptics_charge_mode_enable(int enable, int is_fast_charge)
 {
 	int ret;
@@ -4268,8 +4267,6 @@ static int synaptics_ts_probe(
 	//modify rendong for ts_g should be exit for some proc file
 	init_synaptics_proc(ts);
 	
-	if(ts->charger_pump_support)
-		synaptics_chg_mode_enable = synaptics_charge_mode_enable;
 #ifdef CONFIG_SYNAPTIC_RED	
 	premote_data = remote_alloc_panel_data();
 	if(premote_data) {
