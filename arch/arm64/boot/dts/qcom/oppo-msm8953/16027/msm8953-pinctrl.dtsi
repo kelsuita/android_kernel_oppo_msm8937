@@ -1,0 +1,58 @@
+/*
+ * Copyright (c) 2015-2018, The Linux Foundation. All rights reserved.
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License version 2 and
+ * only version 2 as published by the Free Software Foundation.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ */
+
+&soc {
+    tlmm: pinctrl@1000000 {
+        pmx_mdss: pmx_mdss {
+            mdss_dsi_active: mdss_dsi_active {
+                mux {
+                    pins = "gpio34", "gpio38", "gpio131";
+                };
+
+                config {
+                    pins = "gpio34", "gpio38", "gpio131";
+                };
+            };
+
+            mdss_dsi_suspend: mdss_dsi_suspend {
+                mux {
+                    pins = "gpio34", "gpio38", "gpio131";
+                };
+
+                config {
+                    pins = "gpio34", "gpio38", "gpio131";
+                };
+            };
+        };
+
+        pmx_mdss_te {
+            mdss_te_active: mdss_te_active {
+                mux {
+                    pins = "gpio24", "gpio63";
+                };
+                config {
+                    pins = "gpio24", "gpio63";
+                };
+            };
+
+            mdss_te_suspend: mdss_te_suspend {
+                mux {
+                    pins = "gpio24", "gpio63";
+                };
+                config {
+                    pins = "gpio24", "gpio63";
+                };
+            };
+        };
+    };
+};
