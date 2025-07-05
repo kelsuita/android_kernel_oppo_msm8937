@@ -11,6 +11,10 @@
  * GNU General Public License for more details.
  */
 
+/ {
+	qcom,enable-legacy-adsp-hacks;
+};
+
 &soc {
 	int_codec: sound {
 		/delete-property/ qcom,cdc-us-euro-gpios;
@@ -45,6 +49,7 @@
 					"PDM_IN_RX1", "PDM_OUT_RX1",
 					"PDM_IN_RX2", "PDM_OUT_RX2",
 					"PDM_IN_RX3", "PDM_OUT_RX3";
+		qcom,use-legacy-voice-cpu-dais;
 
 		qcom,quat-mi2s-gpios = <&cdc_quat_mi2s_gpios>;
 	};
