@@ -39,4 +39,6 @@
 		enable-active-high;
 		gpio = <&tlmm 93 0>;
 	};
+
+	/delete-node/ adv_vreg;
 };

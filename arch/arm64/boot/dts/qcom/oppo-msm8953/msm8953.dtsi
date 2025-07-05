@@ -139,6 +139,8 @@
 					0x9f 0x1c
 					0x00 0x18>;
 	};
+
+	/delete-node/ adv_vreg;
 };
 
 &pm8953_l10 {
