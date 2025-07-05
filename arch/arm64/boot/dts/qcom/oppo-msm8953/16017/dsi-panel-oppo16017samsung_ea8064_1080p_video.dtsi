@@ -97,5 +97,8 @@
 		qcom,mdss-dsi-pan-fps-update = "dfps_immediate_porch_mode";
 		qcom,mdss-dsi-min-refresh-rate = <35>;
 		qcom,mdss-dsi-max-refresh-rate = <60>;*/
+
+		cm,mdss-livedisplay-hbm-off-cmd = [15 01 00 00 01 00 02 53 20];
+		cm,mdss-livedisplay-hbm-on-cmd = [15 01 00 00 01 00 02 53 E0];
 	};
 };
