@@ -58,6 +58,11 @@ int oppo_spk_pa_on;
 int oppo_hp_pa_on;
 #endif
 
+#ifdef CONFIG_SND_SOC_AK4376
+static atomic_t quin_mi2s_mclk_ref;
+static struct mutex quin_mclk_lock;
+#endif
+
 static atomic_t quat_mi2s_clk_ref;
 static atomic_t quin_mi2s_clk_ref;
 static atomic_t auxpcm_mi2s_clk_ref;
@@ -1259,6 +1264,50 @@ done:
 	return ret;
 }
 
+#ifdef CONFIG_SND_SOC_AK4376
+static int msm8952_enable_ak4376_mclk(struct snd_soc_card *card, bool enable)
+{
+	int ret = 0;
+
+	pr_debug("%s: enable %d mclk ref counter %d\n",
+		 __func__, enable,
+		 atomic_read(&quin_mi2s_mclk_ref));
+
+	mutex_lock(&quin_mclk_lock);
+	if (enable) {
+		if (!atomic_read(&quin_mi2s_mclk_ref)) {
+			wsa_ana_clk.enable = enable;
+			ret = afe_set_lpass_clock_v2(
+					AFE_PORT_ID_PRIMARY_MI2S_RX,
+					&wsa_ana_clk);
+			if (ret < 0) {
+				pr_err("%s: failed to enable mclk %d\n",
+					__func__, ret);
+				goto done;
+			}
+		}
+		atomic_inc(&quin_mi2s_mclk_ref);
+	} else {
+		if (!atomic_read(&quin_mi2s_mclk_ref))
+			goto done;
+		if (!atomic_dec_return(&quin_mi2s_mclk_ref)) {
+			wsa_ana_clk.enable = enable;
+			ret = afe_set_lpass_clock_v2(
+					AFE_PORT_ID_PRIMARY_MI2S_RX,
+					&wsa_ana_clk);
+			if (ret < 0) {
+				pr_err("%s: failed to disable mclk %d\n",
+					__func__, ret);
+				goto done;
+			}
+		}
+	}
+done:
+	mutex_unlock(&quin_mclk_lock);
+	return ret;
+}
+#endif
+
 static int msm_mi2s_snd_startup(struct snd_pcm_substream *substream)
 {
 	struct snd_soc_pcm_runtime *rtd = substream->private_data;
@@ -1604,6 +1653,16 @@ static int msm_quin_mi2s_snd_startup(struct snd_pcm_substream *substream)
 		pr_err("failed to enable sclk\n");
 		return ret;
 	}
+#ifdef CONFIG_SND_SOC_AK4376
+	if (substream->stream == SNDRV_PCM_STREAM_PLAYBACK) {
+		ret = msm8952_enable_ak4376_mclk(card, true);
+		if (ret < 0) {
+			pr_err("%s: failed to enable mclk for wsa %d\n",
+				__func__, ret);
+			return ret;
+		}
+	}
+#endif
 	if (pdata->mi2s_gpio_p[QUIN_MI2S]) {
 		ret =  msm_cdc_pinctrl_select_active_state(
 			pdata->mi2s_gpio_p[QUIN_MI2S]);
@@ -1640,6 +1699,15 @@ static void msm_quin_mi2s_snd_shutdown(struct snd_pcm_substream *substream)
 		pr_err("%s:clock disable failed\n", __func__);
 	if (atomic_read(&quin_mi2s_clk_ref) > 0)
 		atomic_dec(&quin_mi2s_clk_ref);
+#ifdef CONFIG_SND_SOC_AK4376
+	if (substream->stream == SNDRV_PCM_STREAM_PLAYBACK) {
+		ret = msm8952_enable_ak4376_mclk(card, false);
+		if (ret < 0) {
+			pr_err("%s: failed to disable mclk for wsa %d\n",
+				__func__, ret);
+		}
+	}
+#endif
 	if (pdata->mi2s_gpio_p[QUIN_MI2S]) {
 		ret =  msm_cdc_pinctrl_select_sleep_state(
 			pdata->mi2s_gpio_p[QUIN_MI2S]);
@@ -3566,6 +3634,11 @@ parse_mclk_freq:
 	atomic_set(&quin_mi2s_clk_ref, 0);
 	atomic_set(&auxpcm_mi2s_clk_ref, 0);
 
+#ifdef CONFIG_SND_SOC_AK4376
+	atomic_set(&quin_mi2s_mclk_ref, 0);
+	mutex_init(&quin_mclk_lock);
+#endif
+
 	ret = snd_soc_of_parse_audio_routing(card,
 			"qcom,audio-routing");
 	if (ret)
@@ -3657,6 +3730,9 @@ static int msm8952_asoc_machine_remove(struct platform_device *pdev)
 		}
 		mutex_destroy(&pdata->wsa_mclk_mutex);
 	}
+#ifdef CONFIG_SND_SOC_AK4376
+	mutex_destroy(&quin_mclk_lock);
+#endif
 	snd_soc_unregister_card(card);
 	mutex_destroy(&pdata->cdc_int_mclk0_mutex);
 	return 0;
