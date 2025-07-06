@@ -1509,21 +1509,25 @@ static int ak4376_probe(struct snd_soc_codec *codec)
 
 	ret = ak4376_parse_dt(ak4376);
 	akdbgprt("\t[AK4376] %s(%d) ret=%d\n",__FUNCTION__,__LINE__,ret);
-	if ( ret < 0 ) ak4376->pdn1 = 2; // No use GPIO control
-	ret = gpio_request(ak4376->priv_pdn_en, "ak4376 pdn");
-	akdbgprt("\t[AK4376] %s : gpio_request ret = %d\n",__FUNCTION__, ret);
-	if (ret) {
-		akdbgprt("\t[AK4376] %s(%d) cannot get ak4376 pdn gpio\n",__FUNCTION__,__LINE__);
-		ak4376->pdn1 = 2; // No use GPIO control
+	if (ret == 0) {
+		ret = gpio_request(ak4376->priv_pdn_en, "ak4376 pdn");
+		akdbgprt("\t[AK4376] %s : gpio_request ret = %d\n",__FUNCTION__, ret);
+		if (ret == 0) {
+			ret = gpio_direction_output(ak4376->priv_pdn_en, 0);
+			if (ret == 0) {
+				akdbgprt("\t[AK4376] %s(%d) pdn_en=0\n", __FUNCTION__,__LINE__);
+			} else {
+				akdbgprt("\t[AK4376] %s(%d) pdn_en=0 fail\n", __FUNCTION__,__LINE__);
+				gpio_free(ak4376->priv_pdn_en);
+			}
+		} else {
+			akdbgprt("\t[AK4376] %s(%d) cannot get ak4376 pdn gpio\n",__FUNCTION__,__LINE__);
+		}
 	}
 
-	ret = gpio_direction_output(ak4376->priv_pdn_en, 0);
-	if (ret) {
-		akdbgprt("\t[AK4376] %s(%d) pdn_en=0 fail\n", __FUNCTION__,__LINE__);
-		gpio_free(ak4376->priv_pdn_en);
+	// Disable GPIO control on any error
+	if (ret < 0) {
 		ak4376->pdn1 = 2;
-	} else {
-		akdbgprt("\t[AK4376] %s(%d) pdn_en=0\n", __FUNCTION__,__LINE__);
 	}
 
 #ifdef CONFIG_MACH_OPPO
