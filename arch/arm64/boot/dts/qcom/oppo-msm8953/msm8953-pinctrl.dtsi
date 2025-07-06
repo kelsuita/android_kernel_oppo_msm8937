@@ -391,6 +391,21 @@
 			};
 		};
 
+		smart_pa_int {
+			pa_int_default: pa_int_default {
+				mux {
+					pins = "gpio33";
+					function = "gpio";
+				};
+
+				config {
+					pins = "gpio33";
+					drive-strength = <4>;
+					bias-disable;
+				};
+			};
+		};
+
 		ext-cdc-tlmm-quin-i2s-mclk {
 			ext_cdc_tlmm_quin_i2s_mclk_act: ext_cdc_tlmm_quin_i2s_mclk_act {
 				mux {
