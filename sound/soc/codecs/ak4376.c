@@ -26,10 +26,6 @@
 
 #include "ak4376.h"
 
-#ifdef CONFIG_MACH_OPPO
-#include <linux/regulator/consumer.h>
-#endif
-
 //#define AK4376_DEBUG			// used at debug mode
 //#define CONFIG_DEBUG_FS_CODEC		// used at debug mode
 
@@ -61,8 +57,6 @@ struct ak4376_priv {
 
 #ifdef CONFIG_MACH_OPPO
 	int audio_vdd_en_gpio;
-	struct regulator *ak4376_tvdd;
-	struct regulator *ak4376_avdd;
 #endif
 };
 
@@ -1549,65 +1543,6 @@ static int ak4376_probe(struct snd_soc_codec *codec)
 			"property %s in node %s not found %d\n",
 			"audio-vdd-enable-gpios", client->dev.of_node->full_name,
 			ak4376->priv_pdn_en);
-	}
-
-	ak4376->ak4376_tvdd = regulator_get(&client->dev, "ak4376-tvdd");
-	if (IS_ERR(ak4376->ak4376_tvdd))
-	{
-		akdbgprt("\t[AK4376] %s(%d) cannot get devm_regulator_get\n",__FUNCTION__,__LINE__);
-		devm_kfree(&client->dev, ak4376);
-		return PTR_ERR(ak4376->ak4376_tvdd);
-	}
-	else
-	{
-		if(regulator_count_voltages(ak4376->ak4376_tvdd) > 0)
-		{
-			ret = regulator_set_voltage(ak4376->ak4376_tvdd, 1800000,
-						   1800000);
-			if (ret)
-			{
-				dev_err(&client->dev,
-				"Regulator set tvdd failed ret=%d\n", ret);
-				return ret;
-			}
-		}
-	}
-	ret = regulator_enable(ak4376->ak4376_tvdd);
-	if (ret)
-	{
-		printk("regulator_enable tvdd failed\n");
-		devm_kfree(&client->dev, ak4376);
-		return ret;
-	}
-
-	ak4376->ak4376_avdd = regulator_get(&client->dev, "ak4376-avdd");
-	if (IS_ERR(ak4376->ak4376_avdd))
-	{
-		akdbgprt("\t[AK4376] %s(%d) cannot get devm_regulator_get\n",__FUNCTION__,__LINE__);
-		devm_kfree(&client->dev, ak4376);
-		return PTR_ERR(ak4376->ak4376_avdd);
-	}
-	else
-	{
-		if(regulator_count_voltages(ak4376->ak4376_avdd) > 0)
-		{
-			ret = regulator_set_voltage(ak4376->ak4376_avdd, 2050000,
-						   2050000);
-			if (ret)
-			{
-				dev_err(&client->dev,
-				"Regulator set avdd failed ret=%d\n", ret);
-				return ret;
-			}
-		}
-	}
-	ret = regulator_enable(ak4376->ak4376_avdd);
-	if (ret)
-	{
-		printk("regulator_enable avdd failed\n");
-		devm_kfree(&client->dev, ak4376);
-
-		return ret;
 	}
 
 	ret = gpio_request(ak4376->audio_vdd_en_gpio, "audio_vdd_en_gpio");

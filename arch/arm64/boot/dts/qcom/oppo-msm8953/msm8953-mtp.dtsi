@@ -180,15 +180,12 @@
 		reg = <0x10>;
 		ak4376,reset-gpio = <&tlmm 28 0x00>;
 		audio-vdd-enable-gpio = <&tlmm 62 0x00>;
-		ak4376-tvdd-supply = <&pm8953_l5>;
-		ak4376-avdd-supply = <&pm8953_s4>;
 	};
 
 	tfa98xx@36 {
 		compatible = "nxp,tfa98xx";
 		reg = <0x36>;
 		reset-gpio = <&tlmm 33 0x00>;
-		tfa9890_vdd-supply = <&pm8953_l5>;
 
 		pinctrl-names = "default";
 		pinctrl-0 = <&pa_int_default>;
