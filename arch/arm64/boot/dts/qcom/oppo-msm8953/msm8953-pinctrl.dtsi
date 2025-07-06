@@ -362,8 +362,8 @@
 			};
 		};
 
-		audio-vdd-enable {
-			audio_vdd_enable_act: audio_vdd_enable_act {
+		ak4376 {
+			ak4376_vdd_default: ak4376_vdd_default {
 				mux {
 					pins = "gpio62";
 					function = "gpio";
@@ -372,21 +372,8 @@
 				config {
 					pins = "gpio62";
 					drive-strength = <8>;
-					output-low;
-					bias-pull-none;
-				};
-			};
-
-			audio_vdd_enable_sus: audio_vdd_enable_sus {
-				mux {
-					pins = "gpio62";
-					function = "gpio";
-				};
-
-				config {
-					pins = "gpio62";
-					drive-strength = <2>;
-					bias-disable;
+					output-high;
+					bias-pull-up;
 				};
 			};
 		};

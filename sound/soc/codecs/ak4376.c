@@ -54,10 +54,6 @@ struct ak4376_priv {
 	int nDACOn;
 	struct i2c_client *i2c;
 	struct regmap *regmap;
-
-#ifdef CONFIG_MACH_OPPO
-	int audio_vdd_en_gpio;
-#endif
 };
 
 /* ak4376 register cache & default register settings */
@@ -1523,47 +1519,6 @@ static int ak4376_probe(struct snd_soc_codec *codec)
 	if (ret < 0) {
 		ak4376->pdn1 = 2;
 	}
-
-#ifdef CONFIG_MACH_OPPO
-	ak4376->audio_vdd_en_gpio = of_get_named_gpio(client->dev.of_node,
-					"audio-vdd-enable-gpio", 0);
-	if (ak4376->audio_vdd_en_gpio < 0)
-	{
-		dev_err(&client->dev,
-			"property %s in node %s not found %d\n",
-			"audio-vdd-enable-gpios", client->dev.of_node->full_name,
-			ak4376->audio_vdd_en_gpio);
-	}
-
-	ak4376->priv_pdn_en = of_get_named_gpio(client->dev.of_node,
-					"ak4376,reset-gpio", 0);
-	if (ak4376->priv_pdn_en < 0)
-	{
-		dev_err(&client->dev,
-			"property %s in node %s not found %d\n",
-			"audio-vdd-enable-gpios", client->dev.of_node->full_name,
-			ak4376->priv_pdn_en);
-	}
-
-	ret = gpio_request(ak4376->audio_vdd_en_gpio, "audio_vdd_en_gpio");
-	if (ret)
-	{
-		akdbgprt("\t[AK4376] %s(%d) cannot request audio_vdd_en_gpio gpio\n",__FUNCTION__,__LINE__);
-	}
-	else
-	{
-		ret = gpio_direction_output(ak4376->audio_vdd_en_gpio, 1);
-		if (ret)
-		{
-			akdbgprt("\t[AK4376] %s(%d) audio_vdd_en_gpio=0 fail\n", __FUNCTION__,__LINE__);
-			gpio_free(ak4376->audio_vdd_en_gpio);
-		}
-		else
-		{
-			akdbgprt("\t[AK4376] %s(%d) audio_vdd_en_gpio set success\n", __FUNCTION__,__LINE__);
-		}
-	}
-#endif
 
 #ifdef CONFIG_DEBUG_FS_CODEC
 	mutex_init(&io_lock);
