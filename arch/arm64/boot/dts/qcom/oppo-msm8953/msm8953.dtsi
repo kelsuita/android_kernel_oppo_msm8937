@@ -151,6 +151,12 @@
 	regulator-always-on;
 };
 
+&pm8953_l22 {
+	regulator-min-microvolt = <1800000>;
+	regulator-max-microvolt = <1800000>;
+	qcom,init-voltage = <1800000>;
+};
+
 &eldo2_8953 {
 	gpio = <&tlmm 64 0>;
 };
