@@ -775,7 +775,7 @@ static void int_key(struct synaptics_ts_data *ts )
 {
 
     	int ret;
-	int button_key;
+	int button_key, processed_key;
 
     	ret = synaptics_rmi4_i2c_write_byte(ts->client, 0xff, 0x02 );
     	if (ret < 0) {
@@ -807,8 +807,14 @@ static void int_key(struct synaptics_ts_data *ts )
 		ret = synaptics_rmi4_i2c_write_byte(ts->client, 0xff, 0x00);
 		return;
 	}
+
+	// Process key input event
+	processed_key = button_key & 0x03;
+	if (key_reverse && (processed_key == 1 || processed_key == 2))
+		processed_key = 3 - processed_key;
+
 	//mingqiang.guo add for two key down ,can not report long press ,resolve for  electrostatic experiment
-	switch(button_key&0x03)  
+	switch(processed_key)
 	{
 		case 0: //up
 			if(ts->pre_btn_state==1)
