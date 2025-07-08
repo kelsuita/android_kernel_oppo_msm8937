@@ -767,16 +767,16 @@ static const struct snd_soc_dapm_widget ak4376_dapm_widgets[] = {
 static const struct snd_soc_dapm_route ak4376_intercon[] =
 {
 
-	{"AK4376 DAC", "NULL", "AK4376 PLL"},
-	{"AK4376 DAC", "NULL", "AK4376 SDTI"},
+	{"AK4376 DAC", NULL, "AK4376 PLL"},
+	{"AK4376 DAC", NULL, "AK4376 SDTI"},
 
 	{"AK4376 HPL Mixer", "LDACL", "AK4376 DAC"},
 	{"AK4376 HPL Mixer", "RDACL", "AK4376 DAC"},
 	{"AK4376 HPR Mixer", "LDACR", "AK4376 DAC"},
 	{"AK4376 HPR Mixer", "RDACR", "AK4376 DAC"},
 
-	{"AK4376 HPL", "NULL", "AK4376 HPL Mixer"},
-	{"AK4376 HPR", "NULL", "AK4376 HPR Mixer"},
+	{"AK4376 HPL", NULL, "AK4376 HPL Mixer"},
+	{"AK4376 HPR", NULL, "AK4376 HPR Mixer"},
 
 };
 
