@@ -88,6 +88,7 @@
 #define TPD_ERR(a, arg...)  pr_err(LOG_TAG ": " a, ##arg)
 #define TPDTM_DMESG(a, arg...)  printk(LOG_TAG ": " a, ##arg)
 
+#define TPD_INFO(a, arg...)  pr_err(TPD_DEVICE ": " a, ##arg)
 #define TPD_DEBUG(a,arg...)\
 	do{\
 		if(tp_debug)\
@@ -998,6 +999,7 @@ static int synaptics_s1302_fw_show(struct seq_file *seq, void *offset)
 static ssize_t synaptics_s1302_fw_write(struct file *file, const char __user *page, size_t t, loff_t *lo)
 {
 	int val = 0;
+	char buf[4] = {0};
 	TPD_DAILY("start update ******* page :%s  ts_g==NULL? %s\n",page,(ts_g==NULL)? "yes":"no");
     if (NULL == ts_g)
         return -EINVAL;
@@ -1006,7 +1008,12 @@ static ssize_t synaptics_s1302_fw_write(struct file *file, const char __user *pa
 	if (t > 2)
 		return -EINVAL;
 
-	sscanf(page, "%d", &val);
+	if (copy_from_user(buf, page, t)) {
+		TPD_INFO("%s: read proc input error.\n", __func__);
+		return -EINVAL;
+	}
+
+	sscanf(buf, "%d", &val);
 
 	if(!val)
 		val = force_update;
@@ -1134,12 +1141,18 @@ static int synaptics_s1302_radd_show(struct seq_file *seq, void *offset)
 static ssize_t synaptics_s1302_radd_write(struct file *file, const char __user *buffer, size_t count, loff_t *ppos)
 {
 	int buf[128];
+	char inbuff[128] = {0};
     int ret,i;
 	struct synaptics_ts_data *ts = ts_g;
     int temp_block,wbyte;
     char reg[30];
 
-    ret = sscanf(buffer,"%x %x %x %x %x %x %x %x %x %x %x %x %x %x %x %x %x %x",\
+	if (copy_from_user(inbuff, buffer, count)) {
+		TPD_INFO("%s: read proc input error.\n", __func__);
+		return count;
+	}
+
+    ret = sscanf(inbuff,"%x %x %x %x %x %x %x %x %x %x %x %x %x %x %x %x %x %x",\
     &buf[0],&buf[1],&buf[2],&buf[3],&buf[4],&buf[5],&buf[6],&buf[7],&buf[8],&buf[9],\
     &buf[10],&buf[11],&buf[12],&buf[13],&buf[14],&buf[15],&buf[16],&buf[17]);
     for (i = 0;i < ret;i++)
@@ -1184,7 +1197,8 @@ const struct file_operations proc_radd =
 };
 static ssize_t synaptics_s1302_reset_write (struct file *file, const char *buffer, size_t count, loff_t *ppos)
 {
-    int ret,write_flag;
+	int ret,write_flag;
+	char buf[4] = {0};
 	struct synaptics_ts_data *ts = ts_g;
 
 	if(ts->loading_fw) {
@@ -1192,7 +1206,15 @@ static ssize_t synaptics_s1302_reset_write (struct file *file, const char *buffe
 		return count;
 	}
 
-    ret = sscanf(buffer,"%x",&write_flag);
+	if (count > 2)
+		return count;
+
+	if (copy_from_user(buf, buffer, count)) {
+		TPD_INFO("%s: read proc input error.\n", __func__);
+		return count;
+	}
+
+    ret = sscanf(buf,"%x",&write_flag);
     TPD_ERR("%s write %d\n",__func__,write_flag);
     if (1 == write_flag)
     {
@@ -1226,9 +1248,18 @@ const struct file_operations proc_reset =
 };
 static ssize_t synaptics_s1302_debug_write (struct file *file, const char *buffer, size_t count, loff_t *ppos)
 {
-    int ret,write_flag;
+	int ret,write_flag;
+	char buf[4] = {0};
 
-    ret = sscanf(buffer,"%x",&write_flag);
+	if (count > 2)
+		return count;
+
+	if (copy_from_user(buf, buffer, count)) {
+		TPD_INFO("%s: read proc input error.\n", __func__);
+		return count;
+	}
+
+    ret = sscanf(buf,"%x",&write_flag);
     TPD_ERR("%s write %d\n",__func__,write_flag);
     tp_debug = write_flag?1:0;
 	return count;

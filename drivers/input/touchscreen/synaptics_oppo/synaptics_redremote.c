@@ -200,8 +200,17 @@ static ssize_t rmidev_sysfs_open_store(struct device *dev,
 		struct device_attribute *attr, const char *buf, size_t count)
 {
 	unsigned int input;
+	char buffer[4] = {0};
 
-	if (sscanf(buf, "%u", &input) != 1)
+	if (count > 2)
+		return -EINVAL;
+
+	if (copy_from_user(buffer, buf, count)) {
+		pr_info("%s: read proc input error.\n", __func__);
+		return -EINVAL;
+	}
+
+	if (sscanf(buffer, "%u", &input) != 1)
 			return -EINVAL;
 
 	if (input != 1)
@@ -219,8 +228,17 @@ static ssize_t rmidev_sysfs_release_store(struct device *dev,
 		struct device_attribute *attr, const char *buf, size_t count)
 {
 	unsigned int input;
+	char buffer[4] = {0};
 
-	if (sscanf(buf, "%u", &input) != 1)
+	if (count > 2)
+		return -EINVAL;
+
+	if (copy_from_user(buffer, buf, count)) {
+		pr_info("%s: read proc input error.\n", __func__);
+		return -EINVAL;
+	}
+
+	if (sscanf(buffer, "%u", &input) != 1)
 			return -EINVAL;
 
 	if (input != 1)
@@ -238,8 +256,14 @@ static ssize_t rmidev_sysfs_address_store(struct device *dev,
 		struct device_attribute *attr, const char *buf, size_t count)
 {
 	unsigned int input;
+	char buffer[512] = {0};
 
-	if (sscanf(buf, "%u", &input) != 1)
+	if (copy_from_user(buffer, buf, count)) {
+		pr_info("%s: read proc input error.\n", __func__);
+		return -EINVAL;
+	}
+
+	if (sscanf(buffer, "%u", &input) != 1)
 			return -EINVAL;
 
 	if (input > REG_ADDR_LIMIT)
@@ -254,8 +278,14 @@ static ssize_t rmidev_sysfs_length_store(struct device *dev,
 		struct device_attribute *attr, const char *buf, size_t count)
 {
 	unsigned int input;
+	char buffer[512] = {0};
 
-	if (sscanf(buf, "%u", &input) != 1)
+	if (copy_from_user(buffer, buf, count)) {
+		pr_info("%s: read proc input error.\n", __func__);
+		return -EINVAL;
+	}
+
+	if (sscanf(buffer, "%u", &input) != 1)
 			return -EINVAL;
 
 	if (input > REG_ADDR_LIMIT)

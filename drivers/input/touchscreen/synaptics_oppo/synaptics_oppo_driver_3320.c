@@ -150,6 +150,7 @@ struct test_header {
 #define TPD_ERR(a, arg...)  pr_err(TPD_DEVICE ": " a, ##arg)	
 #define TPDTM_DMESG(a, arg...)  printk(TPD_DEVICE ": " a, ##arg)
 
+#define TPD_INFO(a, arg...)  pr_err(TPD_DEVICE ": " a, ##arg)
 #define TPD_DEBUG(a,arg...)\
 	do{\
 		if(tp_debug)\
@@ -1984,7 +1985,10 @@ static ssize_t write_base_register_address(struct file *file, const char __user 
 	int data,cnt;
 	int off;
 
-	strcpy (buf,buffer);
+	if (copy_from_user(buf, buffer, count)) {
+		TPD_INFO("%s: read proc input error.\n", __func__);
+		return count;
+	}
 	cnt = sscanf(buf,"%x %d",&off, &data);
 //	TPD_ERR("off is 0x%zx; data is %d\n",off,data);
 	synaptics_select_regieter(off,data,buffer_data);
@@ -2124,6 +2128,16 @@ static ssize_t tp_show(struct file *file, char __user *buf, size_t count, loff_t
 static ssize_t store_tp(struct file *file, const char __user *buf, size_t count, loff_t *lo)
 {
 	int tmp = 0;
+	char buffer[4] = {0};
+
+	if (count > 2)
+		return count;
+
+	if (copy_from_user(buffer, buf, count)) {
+		TPD_INFO("%s: read proc input error.\n", __func__);
+		return count;
+	}
+
 	if( 1 == sscanf(buf, "%d", &tmp) ){
 		tp_debug = tmp;
 	} else {
@@ -3098,11 +3112,17 @@ static ssize_t synaptics_update_fw_write(struct file *file, const char __user *p
 {
 	struct synaptics_ts_data *ts = ts_g;
 	int val = 0;
+	char buf[4] = {0};
 
 	if (size> 2)
 		return -EINVAL;
 
-	sscanf(page, "%d", &val);
+	if (copy_from_user(buf, page, size)) {
+		TPD_INFO("%s: read proc input error.\n", __func__);
+		return -EINVAL;
+	}
+
+	sscanf(buf, "%d", &val);
 	if(!val)
 		val = force_update;
 
@@ -3214,8 +3234,17 @@ static int synaptics_finger_entrance(void);
 static ssize_t trigger_finger_protect(struct file *file, const char __user *buffer, size_t count, loff_t *ppos)
 {
     int op = 0;
+	char buf[4] = {0};
 
-    if( 1 == sscanf(buffer, "%d", &op) ) {
+	if (count > 2)
+		return count;
+
+	if (copy_from_user(buf, buffer, count)) {
+		TPD_INFO("%s: read proc input error.\n", __func__);
+		return count;
+	}
+
+    if( 1 == sscanf(buf, "%d", &op) ) {
         if (op == 1) {
              synaptics_finger_entrance();
         }
