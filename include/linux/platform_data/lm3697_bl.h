@@ -48,7 +48,8 @@ enum lm3697_max_current {
 /*
  * struct lm3633_backlight_platform_data
  * @name: Backlight device name
- * @bl_string: Bit mask of backlight output string
+ * @led_sources: Backlight output channel configuration.
+ *               Bit mask is set on parsing DT.
  * @imax: Max current for backlight output string
  * @init_brightness: Initial brightness value
  * @pwm_period: Platform specific PWM period value. unit is nano
@@ -56,10 +57,7 @@ enum lm3697_max_current {
 struct lm3697_backlight_platform_data {
 	const char *name;
 
-	unsigned long bl_string;	/* bit OR mask of LM3697_HVLEDx */
-#define LM3697_HVLED1		BIT(0)
-#define LM3697_HVLED2		BIT(1)
-#define LM3697_HVLED3		BIT(2)
+	unsigned long led_sources;
 
 	enum lm3697_max_current imax;
 	unsigned int init_brightness;

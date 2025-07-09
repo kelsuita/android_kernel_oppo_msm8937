@@ -44,7 +44,7 @@
 /* Other definitions */
 #define LM3697_PWM_ID			1
 #define LM3697_MAX_REGISTERS		0xB4
-#define LM3697_MAX_STRINGS		3
+#define LM3697_MAX_CHANNELS		3
 #define LM3697_MAX_BRIGHTNESS		2047
 #define LM3697_IMAX_OFFSET		6
 #define LM3697_DEFAULT_NAME		"lcd-backlight"
@@ -247,8 +247,8 @@ static int lm3697_bl_string_configure(struct lm3697_bl *lm3697_bl)
 	int i, ret;
 
 	/* Control bank assignment for backlight string configuration */
-	for (i = 0; i < LM3697_MAX_STRINGS; i++) {
-		if (test_bit(i, &lm3697_bl->bl_pdata->bl_string)) {
+	for (i = 0; i < LM3697_MAX_CHANNELS; i++) {
+		if (test_bit(i, &lm3697_bl->bl_pdata->led_sources)) {
 			ret = lm3697_bl_update_bits(lm3697_bl->chip,
 						    LM3697_REG_OUTPUT_CFG,
 						    BIT(i), bank_id << i);
@@ -335,7 +335,9 @@ static int lm3697_bl_parse_dt(struct device *dev, struct lm3697_bl_chip *chip)
 	struct lm3697_backlight_platform_data *bl_pdata;
 	struct device_node *node = dev->of_node;
 	struct device_node *child;
-	int num_backlights;
+	int num_backlights, num_sources;
+	u32 sources[LM3697_MAX_CHANNELS];
+	int ret;
 	int i = 0;
 	unsigned int imax_mA;
 
@@ -368,13 +370,21 @@ static int lm3697_bl_parse_dt(struct device *dev, struct lm3697_bl_chip *chip)
 					&bl_pdata[i].name);
 
 		/* Make backlight strings */
-		bl_pdata[i].bl_string = 0;
-		if (of_property_read_bool(child, "hvled1-used"))
-			bl_pdata[i].bl_string |= LM3697_HVLED1;
-		if (of_property_read_bool(child, "hvled2-used"))
-			bl_pdata[i].bl_string |= LM3697_HVLED2;
-		if (of_property_read_bool(child, "hvled3-used"))
-			bl_pdata[i].bl_string |= LM3697_HVLED3;
+		ret = of_property_count_u32_elems(child, "led-sources");
+		if (ret < 0 || ret > LM3697_MAX_CHANNELS)
+			return -EINVAL;
+		num_sources = ret;
+
+		ret = of_property_read_u32_array(child, "led-sources", sources,
+						 num_sources);
+		if (ret) {
+			dev_err(dev, "led-sources property missing\n");
+			return ret;
+		}
+
+		bl_pdata[i].led_sources = 0;
+		while (num_sources--)
+			set_bit(sources[num_sources], &bl_pdata[i].led_sources);
 
 		imax_mA = 0;
 		of_property_read_u32(child, "max-current-milliamp", &imax_mA);

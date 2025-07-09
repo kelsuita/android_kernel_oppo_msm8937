@@ -16,8 +16,11 @@ Sub-nodes:
   Maximum number of sub-nodes is 2.
 
   Required properties of sub-node:
-  - hvled1-used, hvled2-used, hvled3-used: Backlight string configuration about
-                                           which backlight string is used.
+  - led-sources : Indicates which HVLED string is associated to which
+                  control bank.  This is a zero based property so
+                  HVLED1 = 0, HVLED2 = 1, HVLED3 = 2.
+                  Additional information is contained
+                  in Documentation/devicetree/bindings/leds/common.txt
 
   Optional properties of sub-node:
   - backlight-name: Name string for backlight device identification
@@ -43,9 +46,7 @@ lm3697@36 {
 
 	lcd_bl {
 		backlight-name = "lcd";
-		hvled1-used;
-		hvled2-used;
-		hvled3-used;
+		led-sources = <0 1 2>;
 
 		max-current-milliamp = <20>;
 		initial-brightness = <2000>;
@@ -66,8 +67,7 @@ lm3697@36 {
 
 	lcd_bl {
 		backlight-name = "lcd";
-		hvled1-used;
-		hvled2-used;
+		led-sources = <0 1>;
 
 		max-current-milliamp = <20>;
 		initial-brightness = <10>;
@@ -75,7 +75,7 @@ lm3697@36 {
 
 	status {
 		backlight-name = "status";
-		hvled3-used;
+		led-sources = <2>;
 
 		max-current-milliamp = <10>;
 		initial-brightness = <20>;
