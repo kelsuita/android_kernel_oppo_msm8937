@@ -106,7 +106,7 @@ static int lm3697_bl_enable(struct lm3697_bl *lm3697_bl, int enable)
 				     BIT(lm3697_bl->bank_id),
 				     enable << lm3697_bl->bank_id);
 }
-#if 0
+
 static void lm3697_bl_pwm_ctrl(struct lm3697_bl *lm3697_bl, int br, int max_br)
 {
 	struct pwm_device *pwm;
@@ -133,7 +133,7 @@ static void lm3697_bl_pwm_ctrl(struct lm3697_bl *lm3697_bl, int br, int max_br)
 	else
 		pwm_disable(lm3697_bl->pwm);
 }
-#endif
+
 static int lm3697_bl_set_brightness(struct lm3697_bl *lm3697_bl, int brightness)
 {
 	int ret;
@@ -175,7 +175,6 @@ int lm3697_bl_set(int bl_level)
 	return lm3697_bl_set_brightness(lm3697_backlight, bl_level);
 }
 
-#if 0
 static int lm3697_bl_update_status(struct backlight_device *bl_dev)
 {
 	struct lm3697_bl *lm3697_bl = bl_get_data(bl_dev);
@@ -215,7 +214,6 @@ static const struct backlight_ops lm3697_bl_ops = {
 	.update_status = lm3697_bl_update_status,
 	.get_brightness = lm3697_bl_get_brightness,
 };
-#endif
 
 static int lm3697_bl_set_ctrl_mode(struct lm3697_bl *lm3697_bl)
 {
@@ -420,7 +418,7 @@ static void lm3697_bl_disable_hw(struct lm3697_bl_chip *chip)
 		gpio_free(chip->pdata->en_gpio);
 	}
 }
-#if 0
+
 static int lm3697_bl_add_device(struct lm3697_bl *lm3697_bl)
 {
 	struct backlight_device *bl_dev;
@@ -449,7 +447,6 @@ static int lm3697_bl_add_device(struct lm3697_bl *lm3697_bl)
 
 	return 0;
 }
-#endif
 
 static struct lm3697_bl *lm3697_bl_register(struct lm3697_bl_chip *chip)
 {
@@ -475,13 +472,13 @@ static struct lm3697_bl *lm3697_bl_register(struct lm3697_bl_chip *chip)
 			goto err;
 		}
 
-	//	ret = lm3697_bl_add_device(each);
+		ret = lm3697_bl_add_device(each);
 		if (ret) {
 			dev_err(chip->dev, "Backlight device err: %d\n", ret);
 			goto cleanup_backlights;
 		}
 
-	//	backlight_update_status(each->bl_dev);
+		backlight_update_status(each->bl_dev);
 	}
 
 	return lm3697_bl;
@@ -507,7 +504,7 @@ static int lm3697_bl_unregister(struct lm3697_bl *lm3697_bl)
 
 		bl_dev = each->bl_dev;
 		bl_dev->props.brightness = 0;
-		//backlight_update_status(bl_dev);
+		backlight_update_status(bl_dev);
 		backlight_device_unregister(bl_dev);
 	}
 
