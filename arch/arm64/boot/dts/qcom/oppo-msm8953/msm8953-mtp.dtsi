@@ -179,6 +179,7 @@
 		compatible = "akm,ak4376";
 		reg = <0x10>;
 		ak4376,pdn-gpio = <&tlmm 28 0x00>;
+		enable-gpio = <&tlmm 62 0x00>;
 
 		pinctrl-names = "default";
 		pinctrl-0 = <&ak4376_vdd_default>;
