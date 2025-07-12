@@ -1069,7 +1069,7 @@ static ssize_t synaptics_s1302_key_reverse_write(struct file *file, const char _
 }
 static int synaptics_s1302_key_reverse_show(struct seq_file *seq, void *offset)
 {
-    seq_printf(seq, "s1302 menu key in %s\n",key_reverse?("right"):("left"));
+    seq_printf(seq, "%d\n", key_reverse);
     return 0 ;
 }
 static int synaptics_s1302_key_reverse_open(struct inode *inode, struct file *file)
@@ -1108,12 +1108,12 @@ static ssize_t synaptics_s1302_key_enable_write(struct file *file, const char __
 }
 static int synaptics_s1302_key_enable_show(struct seq_file *seq, void *offset)
 {
-	seq_printf(seq, "s1302 key enable %s\n",key_enable?("true"):("false"));
+	seq_printf(seq, "%d\n", key_enable);
 	return 0 ;
 }
 static int synaptics_s1302_key_enable_open(struct inode *inode, struct file *file)
 {
-	return single_open(file, synaptics_s1302_key_reverse_show, inode->i_private);
+	return single_open(file, synaptics_s1302_key_enable_show, inode->i_private);
 }
 const struct file_operations proc_enable_key =
 {
