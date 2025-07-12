@@ -41,6 +41,7 @@
 struct ak4376_priv {
 	struct mutex mutex;
 	unsigned int priv_pdn_en;	// PDN GPIO pin
+	struct gpio_desc *enable_gpiod;	// Enable GPIO pin
 	int pdn1;			// PDN control, 0:Off, 1:On, 2:No use(assume always On)
 	int pdn2;			// PDN control for kcontrol
 	int fs1;
@@ -1479,12 +1480,14 @@ static int ak4376_parse_dt(struct ak4376_priv *ak4376)
 	if (ak4376->priv_pdn_en < 0) {
 		ak4376->priv_pdn_en = -1;
 		return -1;
-	}
-
-	if( !gpio_is_valid(ak4376->priv_pdn_en) ) {
+	} else if (!gpio_is_valid(ak4376->priv_pdn_en)) {
 		printk(KERN_ERR "ak4376 pdn pin(%u) is invalid\n", ak4376->priv_pdn_en);
 		return -1;
 	}
+
+	ak4376->enable_gpiod = devm_gpiod_get_optional(&ak4376->i2c->dev, "enable", GPIOD_OUT_HIGH);
+	if (IS_ERR(ak4376->enable_gpiod))
+		dev_warn(dev, "Failed to request GPIO enable pins\n");
 
 	return 0;
 }
@@ -1519,6 +1522,9 @@ static int ak4376_probe(struct snd_soc_codec *codec)
 	if (ret < 0) {
 		ak4376->pdn1 = 2;
 	}
+
+	// Set enable GPIO
+	gpiod_set_value_cansleep(ak4376->enable_gpiod, 1);
 
 #ifdef CONFIG_DEBUG_FS_CODEC
 	mutex_init(&io_lock);
