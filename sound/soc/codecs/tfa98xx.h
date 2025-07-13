@@ -99,6 +99,7 @@ struct tfa98xx {
 	bool tapdet_open;		/* device file opened */
 	unsigned int tapdet_profiles;	/* tapdet profile bitfield */
 	bool tapdet_poll;		/* tapdet running on polling mode */
+	bool asymmetric_mode;
 
 	unsigned int rate_constraint_list[TFA98XX_NUM_RATES];
 	struct snd_pcm_hw_constraint_list rate_constraint;

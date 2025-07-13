@@ -2826,6 +2826,8 @@ static int tfa98xx_parse_dt(struct device *dev, struct tfa98xx *tfa98xx,
 		tfa98xx->reset_polarity = (value == 0) ? LOW : HIGH;
 
 	dev_dbg(dev, "reset-polarity:%d\n", tfa98xx->reset_polarity);
+
+	tfa98xx->asymmetric_mode = of_find_property(np, "nxp,tfa-asymmetric", false);
 	return 0;
 }
 
@@ -3104,6 +3106,14 @@ static int tfa98xx_i2c_probe(struct i2c_client *i2c,
 	if (!dai)
 		return -ENOMEM;
 	memcpy(dai, tfa98xx_dai, sizeof(tfa98xx_dai));
+
+	if (tfa98xx->asymmetric_mode) {
+		dai->symmetric_rates = 0;
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(3, 14, 0)
+		dai->symmetric_channels = 0;
+		dai->symmetric_samplebits = 0;
+#endif
+	}
 
 	tfa98xx_append_i2c_address(&i2c->dev,
 		i2c,
