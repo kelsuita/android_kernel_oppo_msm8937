@@ -211,6 +211,8 @@ static int touch_major_report_num  = 0;
 //end 
 
 #ifdef SUPPORT_GESTURE
+static int gesture_enabled;
+
 static uint32_t clockwise;
 static uint32_t gesture;
 
@@ -1274,7 +1276,13 @@ static void gesture_judge(struct synaptics_ts_data *ts)
 	TPDTM_DMESG(" gesture_buffer[0] = 0x%x, regswipe = 0x%x,gesture_buffer[1] = 0x%x, gesture_buffer[4] = 0x%x\n", gesture_buffer[0], regswipe, gesture_buffer[1], gesture_buffer[4]);
 	ret = i2c_smbus_write_byte_data(ts->client, 0xff, 0x00); 
 	gesture_sign = gesture_buffer[0];
+
 	//detect the gesture mode
+	if (!gesture_enabled && gesture_sign != DTAP_DETECT) {
+		TPD_INFO("Gesture ignored as it has been disabled.");
+		return;
+	}
+
 	switch (gesture_sign) {
 		case DTAP_DETECT:
 			gesture = KEY_GESTURE_DOUBLE_TAP;
@@ -1758,8 +1766,8 @@ static ssize_t tp_gesture_read_func(struct file *file, char __user *user_buf, si
 	struct synaptics_ts_data *ts = ts_g;
 	if(!ts)
 		return ret;
-	TPD_DEBUG("gesture enable is: %d\n", ts->gesture_enable);
-	ret = sprintf(page, "%d\n", ts->gesture_enable);
+	TPD_DEBUG("gesture enable is: %d\n", gesture_enabled);
+	ret = sprintf(page, "%d\n", gesture_enabled);
 	ret = simple_read_from_buffer(user_buf, count, ppos, page, strlen(page));
 	return ret;
 }
@@ -1782,8 +1790,11 @@ static ssize_t tp_gesture_write_func(struct file *file, const char __user *buffe
 
 	TPD_ERR("%s: ret=%d is_suspended=%d\n",__func__,ret,ts->is_suspended);
 	mutex_lock(&ts->mutex);
-	if (((ret == 0) || (ret == 1)) && ts->is_suspended == 1)
-		synaptics_enable_interrupt_for_gesture(ts, ret);
+	if ((ret == 0) || (ret == 1)) {
+		gesture_enabled = ret;
+		if (ts->is_suspended == 1)
+			synaptics_enable_interrupt_for_gesture(ts, ret);
+	}
 	mutex_unlock(&ts->mutex);
 	return count;
 }
