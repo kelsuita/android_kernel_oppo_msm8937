@@ -12,62 +12,108 @@
  */
 
 &soc {
-    tlmm: pinctrl@1000000 {
-        pmx_mdss: pmx_mdss {
-            mdss_dsi_active: mdss_dsi_active {
-                mux {
-                    pins = "gpio41", "gpio131";
-                };
+	tlmm: pinctrl@1000000 {
+		cam_sensor_mclk1_default: cam_sensor_mclk1_default {
+			/* MCLK1 */
+			mux {
+				/* CLK, DATA */
+				pins = "gpio36";
+			};
 
-                config {
-                    pins = "gpio41", "gpio131";
-                };
-            };
+			config {
+				pins = "gpio36";
+			};
+		};
 
-            mdss_dsi_suspend: mdss_dsi_suspend {
-                mux {
-                    pins = "gpio41", "gpio131";
-                };
+		cam_sensor_mclk1_sleep: cam_sensor_mclk1_sleep {
+			/* MCLK1 */
+			mux {
+				/* CLK, DATA */
+				pins = "gpio36";
+			};
 
-                config {
-                    pins = "gpio41", "gpio131";
-                };
-            };
-        };
+			config {
+				pins = "gpio36";
+			};
+		};
 
-        pmx_mdss_te {
-            mdss_te_active: mdss_te_active {
-                mux {
-                    pins = "gpio24", "gpio63", "gpio134";
-                };
-                config {
-                    pins = "gpio24", "gpio63", "gpio134";
-                };
-            };
+		cam_sensor_front1_default: cam_sensor_front1_default {
+			/* RESET, STANDBY */
+			mux {
+				pins = "gpio36", "gpio129", "gpio130";
+			};
 
-            mdss_te_suspend: mdss_te_suspend {
-                mux {
-                    pins = "gpio24", "gpio63", "gpio134";
-                };
-                config {
-                    pins = "gpio24", "gpio63", "gpio134";
-                };
-            };
-        };
+			config {
+				pins = "gpio36", "gpio129", "gpio130";
+			};
+		};
 
-        smart_pa_int {
-            pa_int_default: pa_int_default {
-                mux {
-                    pins = "gpio33";
-                    function = "gpio";
-                };
+		cam_sensor_front1_sleep: cam_sensor_front1_sleep {
+			/* RESET, STANDBY */
+			mux {
+				pins = "gpio36", "gpio129", "gpio130";
+			};
 
-                config {
-                    pins = "gpio33";
-                    drive-strength = <4>;
-                    bias-disable;
-                };
-            };
-        };
-    };
+			config {
+				pins = "gpio36", "gpio129", "gpio130";
+			};
+		};
+
+		pmx_mdss: pmx_mdss {
+			mdss_dsi_active: mdss_dsi_active {
+				mux {
+					pins = "gpio41", "gpio131";
+				};
+
+				config {
+					pins = "gpio41", "gpio131";
+				};
+			};
+
+			mdss_dsi_suspend: mdss_dsi_suspend {
+				mux {
+					pins = "gpio41", "gpio131";
+				};
+
+				config {
+					pins = "gpio41", "gpio131";
+				};
+			};
+		};
+
+		pmx_mdss_te {
+			mdss_te_active: mdss_te_active {
+				mux {
+					pins = "gpio24", "gpio63", "gpio134";
+				};
+				config {
+					pins = "gpio24", "gpio63", "gpio134";
+				};
+			};
+
+			mdss_te_suspend: mdss_te_suspend {
+				mux {
+					pins = "gpio24", "gpio63", "gpio134";
+				};
+				config {
+					pins = "gpio24", "gpio63", "gpio134";
+				};
+			};
+		};
+
+		smart_pa_int {
+			pa_int_default: pa_int_default {
+				mux {
+					pins = "gpio33";
+					function = "gpio";
+				};
+
+				config {
+					pins = "gpio33";
+					drive-strength = <4>;
+					bias-disable;
+				};
+			};
+		};
+	};
 };

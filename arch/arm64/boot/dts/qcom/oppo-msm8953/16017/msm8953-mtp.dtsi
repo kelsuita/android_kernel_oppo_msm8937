@@ -55,3 +55,24 @@
 		reset-gpio = <&tlmm 33 0x00>;
 	};
 };
+
+/* msm8953-regulator.dtsi */
+&eldo2_8953 {
+	gpio = <&tlmm 64 0>;
+};
+
+/* msm8953-camera-sensor-mtp.dtsi */
+&led_flash0 {
+	gpios = <&tlmm 34 0>, <&tlmm 39 0>;
+};
+
+&cci {
+	eeprom1: qcom,eeprom@1 {
+		gpios = <&tlmm 36 0>;
+	};
+
+	qcom,camera@1 {
+		gpios = <&tlmm 27 0>, <&tlmm 129 0>,
+				<&tlmm 130 0>, <&tlmm 36 0>;
+	};
+};

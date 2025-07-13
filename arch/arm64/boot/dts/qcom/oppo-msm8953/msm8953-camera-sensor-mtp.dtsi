@@ -25,8 +25,6 @@
 		qcom,cam-vreg-max-voltage = <1800000>;
 		qcom,cam-vreg-op-mode = <0>;
 		qcom,slave-id = <0xc6 0x00 0x00>;
-		gpios = <&tlmm 34 0>,
-			<&tlmm 39 0>;
 		qcom,gpio-flash-en = <0>;
 		qcom,gpio-flash-now = <1>;
 		qcom,gpio-req-tbl-num = <0 1>;
@@ -119,7 +117,6 @@
 				&cam_sensor_front1_default>;
 		pinctrl-1 = <&cam_sensor_mclk1_sleep
 				&cam_sensor_front1_sleep>;
-		gpios = <&tlmm 36 0>;
 		qcom,gpio-vana = <0>;
 		qcom,gpio-req-tbl-num = <0>;
 		qcom,gpio-req-tbl-flags = <0>;
@@ -241,10 +238,6 @@
 				&cam_sensor_front1_default>;
 		pinctrl-1 = <&cam_sensor_mclk1_sleep
 				&cam_sensor_front1_sleep>;
-		gpios = <&tlmm 27 0>,
-			<&tlmm 129 0>,
-			<&tlmm 130 0>,
-			<&tlmm 36 0>;
 		qcom,gpio-reset = <1>;
 		qcom,gpio-standby = <2>;
 		qcom,gpio-vana = <3>;
