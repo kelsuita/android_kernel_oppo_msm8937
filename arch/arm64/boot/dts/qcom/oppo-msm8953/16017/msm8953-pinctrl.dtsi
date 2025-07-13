@@ -54,5 +54,20 @@
                 };
             };
         };
+
+        smart_pa_int {
+            pa_int_default: pa_int_default {
+                mux {
+                    pins = "gpio33";
+                    function = "gpio";
+                };
+
+                config {
+                    pins = "gpio33";
+                    drive-strength = <4>;
+                    bias-disable;
+                };
+            };
+        };
     };
 };

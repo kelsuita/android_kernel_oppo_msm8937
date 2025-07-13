@@ -188,7 +188,6 @@
 	tfa98xx@36 {
 		compatible = "nxp,tfa98xx";
 		reg = <0x36>;
-		reset-gpio = <&tlmm 33 0x00>;
 		nxp,tfa-asymmetric;
 
 		pinctrl-names = "default";

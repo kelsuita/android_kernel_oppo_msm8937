@@ -55,6 +55,12 @@
 	};
 };
 
+&i2c_8 { /* BLSP2 QUP4 */
+	tfa98xx@36 {
+		reset-gpio = <&tlmm 64 0x00>;
+	};
+};
+
 &soc {
 	fpc_fpc1020 {
 		fpc,reset-gpio = <&tlmm 140 0x00>;

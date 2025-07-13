@@ -49,3 +49,9 @@
 		ktd2026,max_brightness = <0x18>;
 	};
 };
+
+&i2c_8 { /* BLSP2 QUP4 */
+	tfa98xx@36 {
+		reset-gpio = <&tlmm 33 0x00>;
+	};
+};
