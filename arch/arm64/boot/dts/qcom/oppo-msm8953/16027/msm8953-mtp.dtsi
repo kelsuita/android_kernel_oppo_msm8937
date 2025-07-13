@@ -60,9 +60,3 @@
 		reset-gpio = <&tlmm 64 0x00>;
 	};
 };
-
-&soc {
-	fpc_fpc1020 {
-		fpc,reset-gpio = <&tlmm 140 0x00>;
-	};
-};

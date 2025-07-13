@@ -199,7 +199,6 @@
 &soc {
 	fpc_fpc1020 {
 		compatible = "fpc,fpc1020";
-		fpc,reset-gpio = <&tlmm 140 0x00>;
 		fpc,irq-gpio = <&tlmm 48 0x00>;
 		vdd_io-supply = <&pm8953_l6>;
 	};
