@@ -13,30 +13,6 @@
 
 &soc {
 	tlmm: pinctrl@1000000 {
-		cam_sensor_mclk1_default: cam_sensor_mclk1_default {
-			/* MCLK1 */
-			mux {
-				/* CLK, DATA */
-				pins = "gpio36";
-			};
-
-			config {
-				pins = "gpio36";
-			};
-		};
-
-		cam_sensor_mclk1_sleep: cam_sensor_mclk1_sleep {
-			/* MCLK1 */
-			mux {
-				/* CLK, DATA */
-				pins = "gpio36";
-			};
-
-			config {
-				pins = "gpio36";
-			};
-		};
-
 		cam_sensor_front1_default: cam_sensor_front1_default {
 			/* RESET, STANDBY */
 			mux {
