@@ -271,8 +271,12 @@ static int32_t msm_flash_i2c_init(
 		cci_client->id_map = 0;
 		cci_client->i2c_freq_mode = flash_init_info->i2c_freq_mode;
 #ifdef CONFIG_MACH_OPPO
-		flash_ctrl->flash_i2c_client.addr_type =
-			flash_data->cfg.flash_init_info->settings->addr_type;
+		if (copy_from_user(&flash_ctrl->flash_i2c_client.addr_type,
+			&flash_data->cfg.flash_init_info->settings->addr_type,
+			sizeof(enum msm_camera_i2c_reg_addr_type))) {
+			pr_err("%s copy_from_user failed %d\n", __func__, __LINE__);
+			return -EFAULT;
+		}
 #endif
 	}
 
