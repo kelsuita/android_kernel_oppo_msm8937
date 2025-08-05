@@ -62,10 +62,6 @@
 		qcom,client-id = <0x00000003>;
 	};
 
-	restart@4ab000 {
-		qcom,force-warm-reboot;
-	};
-
 	/delete-node/ qseecom@85b00000;
 	qcom_seecom: qseecom@84a00000 {
 		compatible = "qcom,qseecom";
