@@ -829,7 +829,6 @@ static int synaptics_enable_interrupt_for_gesture(struct synaptics_ts_data *ts, 
 	int ret;
 	unsigned char reportbuf[3];
 	unsigned char val[4];
-	TPD_DEBUG("%s is called\n", __func__);
 	ret = synaptics_rmi4_i2c_write_byte(ts->client, 0xff, 0x0); 
 	if( ret < 0 ) {
 		TPD_ERR("%s: select page failed ret = %d\n", __func__, ret);
@@ -851,6 +850,13 @@ static int synaptics_enable_interrupt_for_gesture(struct synaptics_ts_data *ts, 
 		reportbuf[2] &= 0xfd ;
 	}
 	TPD_DEBUG("%s:reportbuf[2] = 0x%x\n", __func__, reportbuf[2]);
+
+#ifdef SUPPORT_TP_SLEEP_MODE
+	sleep_enable = !enable;
+#endif
+	ret = i2c_smbus_write_byte_data(ts->client, F01_RMI_CTRL00, enable ? 0x80 : 0x01);
+	if (ret < 0)
+		TPD_ERR("%s: Failed to change sleep mode, gestures may not work\n", __func__);
 	
 	ret = synaptics_rmi4_i2c_write_byte(ts->client, 0xff, 0x0); 
 	if( ret < 0 ) {
@@ -862,9 +868,16 @@ static int synaptics_enable_interrupt_for_gesture(struct synaptics_ts_data *ts, 
 		TPD_ERR("%s :Failed to write report buffer\n", __func__);
 		return -1;
 	}		
+
 	gesture = KEY_GESTURE_UNKNOWN;
 	ts->gesture_enable = enable;
+	TPD_DEBUG("touchscreen gesture %s\n", enable ? "enabled" : "disabled");
 	return 0;	
+}
+
+static int synaptics_set_interrupt_for_gesture(struct synaptics_ts_data *ts)
+{
+	return synaptics_enable_interrupt_for_gesture(ts, gesture_enabled || ts->double_enable);
 }
 #endif
 
@@ -1088,6 +1101,8 @@ static void int_state(struct synaptics_ts_data *ts)
 		TPD_DEBUG("int_state:cannot  enable interrupt \n");
 		return;
 	}
+
+#ifdef SUPPORT_GESTURE
 	if(ts->gesture_enable == 1) {
 		ret = i2c_smbus_write_byte_data(ts->client, 0xff, 0x00); 
 		if (ret < 0){
@@ -1097,6 +1112,7 @@ static void int_state(struct synaptics_ts_data *ts)
 		}	
 		synaptics_enable_interrupt_for_gesture(ts, 1);	
 	}
+#endif
 }
 	
 //Added for larger than 32 length read!
@@ -1280,11 +1296,13 @@ static void gesture_judge(struct synaptics_ts_data *ts)
 	//detect the gesture mode
 	if (!gesture_enabled && gesture_sign != DTAP_DETECT) {
 		TPD_INFO("Gesture ignored as it has been disabled.");
-		return;
+		goto out;
 	}
 
 	switch (gesture_sign) {
 		case DTAP_DETECT:
+			if (!ts->double_enable)
+				goto out;
 			gesture = KEY_GESTURE_DOUBLE_TAP;
 			break;
 		case SWIPE_DETECT:
@@ -1327,25 +1345,27 @@ static void gesture_judge(struct synaptics_ts_data *ts)
 									gesture == KEY_GESTURE_SWIPE_UP ? "down to up |" :
 									gesture == KEY_GESTURE_M ? "(M)" :
 									gesture == KEY_GESTURE_W ? "(W)" : "unknown");
-    if(gesture != KEY_GESTURE_UNKNOWN ){
-			synaptics_get_coordinate_point(ts);
-			gesture_upload = gesture;
-			input_report_key(ts->input_dev, gesture, 1);
-			input_sync(ts->input_dev);
-			input_report_key(ts->input_dev, gesture, 0);
-			input_sync(ts->input_dev);
-    }else{
-		ret = synaptics_rmi4_i2c_write_byte(ts->client, 0xff, 0x0);
-		ret = i2c_smbus_read_i2c_block_data( ts->client, F12_2D_CTRL20, 3, &(reportbuf[0x0]) );
-		ret = reportbuf[2] & 0x20;
-		if(ret == 0)
-			reportbuf[2] |= 0x02 ;
-		ret = i2c_smbus_write_i2c_block_data( ts->client, F12_2D_CTRL20, 3, &(reportbuf[0x0]) ); //enable gesture
-		if( ret < 0 ){
-			TPD_ERR("%s :Failed to write report buffer\n", __func__);
-			return;
-		}
-	}	   
+    if (gesture != KEY_GESTURE_UNKNOWN) {
+		synaptics_get_coordinate_point(ts);
+		gesture_upload = gesture;
+		input_report_key(ts->input_dev, gesture, 1);
+		input_sync(ts->input_dev);
+		input_report_key(ts->input_dev, gesture, 0);
+		input_sync(ts->input_dev);
+		return;
+    }
+
+out:
+	ret = synaptics_rmi4_i2c_write_byte(ts->client, 0xff, 0x0);
+	ret = i2c_smbus_read_i2c_block_data( ts->client, F12_2D_CTRL20, 3, &(reportbuf[0x0]) );
+	ret = reportbuf[2] & 0x20;
+	if(ret == 0)
+		reportbuf[2] |= 0x02 ;
+	ret = i2c_smbus_write_i2c_block_data( ts->client, F12_2D_CTRL20, 3, &(reportbuf[0x0]) ); //enable gesture
+	if( ret < 0 ){
+		TPD_ERR("%s :Failed to write report buffer\n", __func__);
+		return;
+	}
 } 
 #endif
 /***************end****************/
@@ -1785,16 +1805,14 @@ static ssize_t tp_gesture_write_func(struct file *file, const char __user *buffe
 	}
 
 	sscanf(buf, "%d", &ret);
-	if(!ts)
+	if(!ts || ret > 2)
 		return count;
 
 	TPD_ERR("%s: ret=%d is_suspended=%d\n",__func__,ret,ts->is_suspended);
 	mutex_lock(&ts->mutex);
-	if ((ret == 0) || (ret == 1)) {
-		gesture_enabled = ret;
-		if (ts->is_suspended == 1)
-			synaptics_enable_interrupt_for_gesture(ts, ret);
-	}
+	gesture_enabled = ret;
+	if (ts->is_suspended)
+		synaptics_set_interrupt_for_gesture(ts);
 	mutex_unlock(&ts->mutex);
 	return count;
 }
@@ -1825,56 +1843,14 @@ static ssize_t tp_double_write_func(struct file *file, const char __user *buffer
 	}
 
 	sscanf(buf, "%d", &ret);
-	if(!ts)
+	if(!ts || ret > 2)
 		return count;
 	
 	TPD_ERR("%s: ret=%d is_suspended=%d\n",__func__,ret,ts->is_suspended);	
 	mutex_lock(&ts->mutex);
-	if( (ret == 0 )||(ret == 1) )
-			ts->double_enable = ret;			
-	if(ts->is_suspended == 1)	{
-		switch(ret) {
-			case 0:
-				//TPDTM_DMESG("%s will be disable\n",__func__);
-				ret = synaptics_enable_interrupt_for_gesture(ts, 0); 
-				if( ret<0 )
-					ret = synaptics_enable_interrupt_for_gesture(ts, 0); 
-				ret = synaptics_enable_interrupt(ts, 0);
-				if(ret){
-					TPD_DEBUG("%s: cannot disable interrupt\n", __func__);
-					break;
-				}
-				ret = i2c_smbus_write_byte_data(ts->client, F01_RMI_CTRL00, 0x01); 
-				if( ret < 0 ){
-					TPD_ERR("write F01_RMI_CTRL00 failed\n");
-					break;
-				}
-				break;
-			case 1:
-				//TPDTM_DMESG("%s will be enable\n",__func__);
-				ret = synaptics_rmi4_i2c_write_byte(ts->client, 0xff, 0x0); 
-				if( ret < 0 ) {
-					TPD_ERR("%s: select page failed ret = %d\n", __func__, ret);
-					break;
-				}
-				ret = i2c_smbus_write_byte_data(ts->client, F01_RMI_CTRL00, 0x80); 
-				if( ret < 0 ){
-					TPD_ERR("write F01_RMI_CTRL00 failed\n");
-					break;
-				}
-				ret = synaptics_enable_interrupt_for_gesture(ts, 1); 
-				if( ret<0 )
-					ret = synaptics_enable_interrupt_for_gesture(ts, 1); 
-                			ret = synaptics_enable_interrupt(ts, 1);
-				if(ret){
-					TPD_DEBUG("%s: cannot enable interrupt\n", __func__);
-					break;
-				}
-				break;
-			default:
-				TPDTM_DMESG("Please enter 0 or 1 to open or close the double-tap function\n");
-		}
-	}
+	ts->double_enable = ret;
+	if (ts->is_suspended)
+		synaptics_set_interrupt_for_gesture(ts);
 	mutex_unlock(&ts->mutex);
 	return count;
 }
@@ -4459,11 +4435,10 @@ static int synaptics_ts_suspend(struct device *dev)
 //end
 
 #ifdef SUPPORT_GESTURE	
-	if( ts->double_enable ){
+	if (gesture_enabled || ts->double_enable) {
 		synaptics_enable_interrupt_for_gesture(ts, 1);
-		TPD_ERR("synaptics:double_tap end suspend\n");
-			ret = 0;
-			goto OUT;
+		ret = 0;
+		goto OUT;
 	}
 #endif
 		
@@ -4539,11 +4514,8 @@ static void speedup_synaptics_resume(struct work_struct *work)
 	msleep(50);
 	/*****Gesture Register********/	
 #ifdef SUPPORT_GESTURE
-	if( ts->double_enable ){
-		ret = synaptics_enable_interrupt_for_gesture(ts, 0); 
-		if( ret<0 )
-			ret = synaptics_enable_interrupt_for_gesture(ts, 0); 
-	}
+	if (gesture_enabled || ts->double_enable)
+		synaptics_enable_interrupt_for_gesture(ts, 0);
 #endif	
 	
 #ifdef SUPPORT_GLOVES_MODE
