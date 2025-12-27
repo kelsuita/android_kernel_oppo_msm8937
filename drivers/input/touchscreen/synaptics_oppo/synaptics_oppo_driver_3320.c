@@ -1917,7 +1917,6 @@ static ssize_t tp_double_read_func(struct file *file, char __user *user_buf, siz
 static ssize_t tp_double_write_func(struct file *file, const char __user *buffer, size_t count, loff_t *ppos)
 {
 	int ret = 0;
-	int read_value;
 	char buf[10] = {0};
 	struct synaptics_ts_data *ts = ts_g;
 	if( count > 2)
@@ -4360,8 +4359,8 @@ static int synaptics_ts_probe(
 	sprintf(ts->fw_id,"0x%x",TP_FW);
 	tp_info.version = ts->fw_id;
 	
-	memset(ts->fw_name,TP_FW_NAME_MAX_LEN,0);
-	memset(ts->test_limit_name,TP_FW_NAME_MAX_LEN,0);
+	memset(ts->fw_name, 0, TP_FW_NAME_MAX_LEN);
+	memset(ts->test_limit_name, 0, TP_FW_NAME_MAX_LEN);
 
 	if( (tp_dev == TP_G2Y) || (tp_dev == TP_TPK) )
 		sprintf(ts->manu_name, "TP_TPK");
