@@ -32,6 +32,7 @@
 #include <soc/oppo/boot_mode.h>
 #include <soc/oppo/oppo_project.h>
 #include <soc/oppo/device_info.h>
+#include <linux/power_supply.h>
 #include <linux/regulator/consumer.h>
 #include <linux/firmware.h>
 
@@ -86,6 +87,7 @@
 #define TEST_MAGIC2 0x474D4954
 #define FINGER_PROTECT
 
+#define POWERSUPPLY_CB
 
 #undef TP_TEST_STATION   //guomingqiang@phone.bsp 2016-4-15 add for tp test beforce assemble a mobile phone 
 
@@ -456,6 +458,13 @@ struct synaptics_ts_data {
 	#ifdef FINGER_PROTECT
     	uint8_t raw_data[1024];
 	#endif
+
+	// Charger pump support
+	int charging_status;
+#ifdef POWERSUPPLY_CB
+	struct delayed_work power_supply_work;
+	struct notifier_block power_supply_notifier;
+#endif
 };
 
 /*Virtual Keys Setting Start*/
@@ -3740,48 +3749,101 @@ static int synapitcs_ts_update(struct i2c_client *client, const uint8_t *data, u
 /****************************S3203*****end!!!!!**********************************/
 
 
-static int charge_plug_status = 0 ;//0: no   1: slow  3:  quickly charge
-static atomic_t charge_plug_in_flag;
-static void synaptics_charge_mode_enable(int enable, int is_fast_charge)
+static void synaptics_charge_mode_enable(int status)
 {
 	int ret;
+	ts_g->charging_status = status;
 
-    	charge_plug_status = enable ;
-	if(ts_g == NULL){
+	if (ts_g == NULL) {
 		TPD_ERR("tp do not register\n");
 		return;
 	}
-    	if(ts_g->loading_fw)
-	{
-		TPD_ERR("  updtae tp firmware now,can not write tp reg \n");
+	if (ts_g->loading_fw) {
+		TPD_ERR("updtae tp firmware now,can not write tp reg\n");
 		return;
 	}
 
-       mutex_lock(&ts_g->mutex);
+	mutex_lock(&ts_g->mutex);
+	TPD_DAILY("%s, page 4  F51_CUSTOM_CTRL31=0x%x write charge_status=%d\n", __func__, F51_CUSTOM_CTRL31, status);
 
-
-	atomic_set(&charge_plug_in_flag,enable);
-	TPD_DAILY("%s, page 4  F51_CUSTOM_CTRL31=0x%x write charge_plug_status=%d is_fast_charge=%d\n",__func__,F51_CUSTOM_CTRL31,charge_plug_status, is_fast_charge);
 	ret = i2c_smbus_write_byte_data(ts_g->client, 0xff, 4);
-	if( ret < 0 ){
+	if (ret < 0) {
 		TPD_ERR("%s i2c error\n", __func__);
-		goto END ;
+		goto END;
 	}
-	ret = i2c_smbus_write_byte_data(ts_g->client, F51_CUSTOM_CTRL31&0x00ff, charge_plug_status);
-	if( ret < 0 ){
+	ret = i2c_smbus_write_byte_data(ts_g->client, F51_CUSTOM_CTRL31 & 0x00ff, status);
+	if (ret < 0) {
 		TPD_ERR("%s i2c error\n", __func__);
-		goto END ;
+		goto END;
 	}
        ret = i2c_smbus_write_byte_data(ts_g->client, 0xff, 0x0);
-	if( ret < 0 ){
+	if (ret < 0) {
 		TPDTM_DMESG("%s i2c error\n", __func__);
-              goto END ;
+		goto END;
 	}
 
 END:
-       mutex_unlock(&ts_g->mutex);
-	return ;
+	mutex_unlock(&ts_g->mutex);
+	return;
 }
+
+#ifdef POWERSUPPLY_CB
+static int synaptic_get_charging_status(void)
+{
+	struct power_supply *usb_psy;
+	struct power_supply *dc_psy;
+	union power_supply_propval val;
+	int is_charging = 0, rc = 0;
+
+	is_charging = !!power_supply_is_system_supplied();
+	if (!is_charging)
+		return 0;
+
+	dc_psy = power_supply_get_by_name("dc");
+	if (dc_psy) {
+		rc = power_supply_get_property(dc_psy, POWER_SUPPLY_PROP_ONLINE, &val);
+		if (rc < 0)
+			TPD_ERR("%s: Couldn't get DC online status, rc=%d\n", __func__, rc);
+		else if (val.intval == 1)
+			return 1;
+	} else {
+		TPD_DEBUG("%s: not found dc psy\n", __func__);
+	}
+	usb_psy = power_supply_get_by_name("usb");
+	if (usb_psy) {
+		rc = power_supply_get_property(usb_psy, POWER_SUPPLY_PROP_PRESENT, &val);
+		if (rc < 0)
+			TPD_ERR("%s Couldn't get usb online status, rc=%d\n", __func__, rc);
+		else if (val.intval == 1)
+			return 1;
+	} else {
+		TPD_DEBUG("%s: not found usb psy\n", __func__);
+	}
+	return 0;
+}
+
+static void synaptic_power_supply_work(struct work_struct *work)
+{
+	int charging_status;
+
+	if (!ts_g)
+		return;
+
+	charging_status = synaptic_get_charging_status();
+	if (charging_status != ts_g->charging_status || ts_g->charging_status < 0)
+		synaptics_charge_mode_enable(charging_status);
+}
+
+static int synaptic_power_supply_event(struct notifier_block *nb, unsigned long event, void *ptr)
+{
+	struct synaptics_ts_data *ts = container_of(nb, struct synaptics_ts_data, power_supply_notifier);
+
+	if (!ts)
+		return 0;
+	schedule_delayed_work(&ts->power_supply_work, msecs_to_jiffies(500));
+	return 0;
+}
+#endif
 
 static  void get_tp_id(int TP_ID1,int TP_ID2,int TP_ID3, struct synaptics_ts_data *ts)
 {
@@ -4079,7 +4141,6 @@ static int synaptics_ts_probe(
 	}
 	memset(ts, 0, sizeof(*ts));	
 
-	atomic_set(&charge_plug_in_flag, 0);
 	ts_g = ts;
 	ts->boot_mode = get_boot_mode();
 	ts->client = client;
@@ -4306,6 +4367,12 @@ static int synaptics_ts_probe(
 	thread = kthread_run(finger_protect_handler, 0, TPD_DEVICE);
 #endif
 
+#ifdef POWERSUPPLY_CB
+	INIT_DELAYED_WORK(&ts->power_supply_work, synaptic_power_supply_work);
+	ts->power_supply_notifier.notifier_call = synaptic_power_supply_event;
+	power_supply_reg_notifier(&ts->power_supply_notifier);
+#endif
+
 	TPD_DEBUG("synaptics_ts_probe 3203: normal end\n");
     	return 0;
     
@@ -4415,23 +4482,20 @@ static int synaptics_ts_suspend(struct device *dev)
 #endif
 
 //mingqiang.guo for charge pulg in ,open tp Finger Amplitude Thre and Finger Dbounce ,avoid charge disturb
-		if(ts->charger_pump_support && atomic_read(&charge_plug_in_flag) )
-		{
-			TPD_ERR("%s, page 4 F51_CUSTOM_CTRL31=0x%x write %d \n",__func__,F51_CUSTOM_CTRL31,0);//0x0424
-			ret = i2c_smbus_write_byte_data(ts_g->client, 0xff, 4);
-			if( ret < 0 ){
-				TPD_ERR("%s i2c error\n",__func__);
-			}
-			ret = i2c_smbus_write_byte_data(ts_g->client, F51_CUSTOM_CTRL31&0x00ff, 0 );
-			if( ret < 0 ){
-				TPD_ERR("%s i2c error\n",__func__);
-			}
-			ret = i2c_smbus_write_byte_data(ts_g->client, 0xff, 0);
-			if( ret < 0 ){
-				TPD_ERR("%s i2c error\n",__func__);
-			}
+	if (ts->charger_pump_support && ts->charging_status) {
+		TPD_ERR("%s, page 4 F51_CUSTOM_CTRL31=0x%x write %d\n", __func__, F51_CUSTOM_CTRL31, 0); //0x0424
+		ret = i2c_smbus_write_byte_data(ts_g->client, 0xff, 4);
+		if (ret < 0)
+			TPD_ERR("%s i2c error\n", __func__);
 
-		}
+		ret = i2c_smbus_write_byte_data(ts_g->client, F51_CUSTOM_CTRL31 & 0x00ff, 0);
+		if (ret < 0)
+			TPD_ERR("%s i2c error\n", __func__);
+
+		ret = i2c_smbus_write_byte_data(ts_g->client, 0xff, 0);
+		if (ret < 0)
+			TPD_ERR("%s i2c error\n", __func__);
+	}
 //end
 
 #ifdef SUPPORT_GESTURE	
@@ -4523,22 +4587,21 @@ static void speedup_synaptics_resume(struct work_struct *work)
 #endif	
 
 //mingqiang.guo for charge pulg in ,open tp Finger Amplitude Thre and Finger Dbounce ,avoid charge disturb
-	if(ts->charger_pump_support && atomic_read(&charge_plug_in_flag) )
-	{
-			TPD_ERR("%s, page 4 F51_CUSTOM_CTRL31=0x%x write charge_plug_status=%d \n",__func__,F51_CUSTOM_CTRL31,charge_plug_status);//0x0424
-			ret = i2c_smbus_write_byte_data(ts_g->client, 0xff, 4);  
-			if( ret < 0 ){
-				TPD_ERR("%s i2c error\n",__func__);
+	if (ts->charger_pump_support && ts->charging_status) {
+			TPD_ERR("%s, page 4 F51_CUSTOM_CTRL31=0x%x write charging_status=%d\n", __func__, F51_CUSTOM_CTRL31, ts->charging_status); //0x0424
+			ret = i2c_smbus_write_byte_data(ts_g->client, 0xff, 4);
+			if (ret < 0) {
+				TPD_ERR("%s i2c error\n", __func__);
 				goto ERR_RESUME;
 			}
-			ret = i2c_smbus_write_byte_data(ts_g->client, F51_CUSTOM_CTRL31&0x00ff,charge_plug_status);  
-			if( ret < 0 ){
-				TPD_ERR("%s i2c error\n",__func__);
-			}
+
+			ret = i2c_smbus_write_byte_data(ts_g->client, F51_CUSTOM_CTRL31 & 0x00ff, ts->charging_status);
+			if (ret < 0)
+				TPD_ERR("%s i2c error\n", __func__);
+
 			ret = i2c_smbus_write_byte_data(ts_g->client, 0xff, 0);  
-			if( ret < 0 ){
-				TPD_ERR("%s i2c error\n",__func__);
-			}
+			if (ret < 0)
+				TPD_ERR("%s i2c error\n", __func__);
 	}
 //end 
 
