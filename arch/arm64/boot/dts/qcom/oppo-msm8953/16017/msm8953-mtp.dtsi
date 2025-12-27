@@ -39,6 +39,7 @@
 	synaptics15018@20 {
 		compatible = "synaptics-s3508";
 		synaptics,tx-rx-num = <16 28>;
+		synaptics,glove-mode-enabled;
 		vcc_i2c_1v8-supply = <&pm8953_l6>;
 	};
 
