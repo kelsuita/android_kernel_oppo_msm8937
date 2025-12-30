@@ -859,13 +859,6 @@ static int synaptics_enable_interrupt_for_gesture(struct synaptics_ts_data *ts, 
 		reportbuf[2] &= 0xfd ;
 	}
 	TPD_DEBUG("%s:reportbuf[2] = 0x%x\n", __func__, reportbuf[2]);
-
-#ifdef SUPPORT_TP_SLEEP_MODE
-	sleep_enable = !enable;
-#endif
-	ret = i2c_smbus_write_byte_data(ts->client, F01_RMI_CTRL00, enable ? 0x80 : 0x01);
-	if (ret < 0)
-		TPD_ERR("%s: Failed to change sleep mode, gestures may not work\n", __func__);
 	
 	ret = synaptics_rmi4_i2c_write_byte(ts->client, 0xff, 0x0); 
 	if( ret < 0 ) {
@@ -886,7 +879,20 @@ static int synaptics_enable_interrupt_for_gesture(struct synaptics_ts_data *ts, 
 
 static int synaptics_set_interrupt_for_gesture(struct synaptics_ts_data *ts)
 {
-	return synaptics_enable_interrupt_for_gesture(ts, gesture_enabled || ts->double_enable);
+	int ret;
+	int enable = gesture_enabled || ts->double_enable;
+
+	// Update gesture interrupt status
+	ret = synaptics_enable_interrupt_for_gesture(ts, enable);
+	if (ret < 0)
+		return ret;
+
+	// Update sleep mode
+	ret = i2c_smbus_write_byte_data(ts->client, F01_RMI_CTRL00, enable ? 0x80 : 0x01);
+	if (ret < 0)
+		TPD_ERR("%s: Failed to change sleep mode, gestures may not work\n", __func__);
+
+	return ret;
 }
 #endif
 
@@ -1303,15 +1309,14 @@ static void gesture_judge(struct synaptics_ts_data *ts)
 	gesture_sign = gesture_buffer[0];
 
 	//detect the gesture mode
-	if (!gesture_enabled && gesture_sign != DTAP_DETECT) {
+	if ((gesture_sign != DTAP_DETECT && !gesture_enabled) ||
+		(gesture_sign == DTAP_DETECT && !ts->double_enable)) {
 		TPD_INFO("Gesture ignored as it has been disabled.");
-		goto out;
+		return;
 	}
 
 	switch (gesture_sign) {
 		case DTAP_DETECT:
-			if (!ts->double_enable)
-				goto out;
 			gesture = KEY_GESTURE_DOUBLE_TAP;
 			break;
 		case SWIPE_DETECT:
@@ -1364,7 +1369,6 @@ static void gesture_judge(struct synaptics_ts_data *ts)
 		return;
     }
 
-out:
 	ret = synaptics_rmi4_i2c_write_byte(ts->client, 0xff, 0x0);
 	ret = i2c_smbus_read_i2c_block_data( ts->client, F12_2D_CTRL20, 3, &(reportbuf[0x0]) );
 	ret = reportbuf[2] & 0x20;
