@@ -99,6 +99,11 @@
 		qcom,mdss-dsi-min-refresh-rate = <35>;
 		qcom,mdss-dsi-max-refresh-rate = <60>;*/
 
+		cm,mdss-livedisplay-cabc-ui-value = <0x02>; /* ACL 15% */
+		cm,mdss-livedisplay-cabc-image-value = <0x03>; /* ACL 50% */
+		cm,mdss-livedisplay-cabc-video-value = <0x01>; /* ACL 30% */
+		cm,mdss-livedisplay-cabc-cmd = [15 00 00 00 01 00 02 55 00];
+
 		cm,mdss-livedisplay-hbm-off-cmd = [15 01 00 00 01 00 02 53 20];
 		cm,mdss-livedisplay-hbm-on-cmd = [15 01 00 00 01 00 02 53 E0];
 	};
