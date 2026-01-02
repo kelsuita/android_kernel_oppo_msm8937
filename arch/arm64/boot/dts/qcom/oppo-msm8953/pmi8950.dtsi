@@ -36,8 +36,7 @@
 			qcom,resume-soc-raw = <254>;
 			qcom,fg-iterm-ma = <200>;
 			qcom,fg-chg-iterm-ma = <150>;
-			qcom,fg-cutoff-voltage-mv = <3400>;
-			qcom,irq-volt-empty-mv = <3200>;
+			qcom,fg-cutoff-voltage-mv = <3200>;
 			qcom,fg-cc-cv-threshold-mv = <4360>;
 			qcom,vbat-estimate-diff-mv = <240>;
 			qcom,hold-soc-while-full;
