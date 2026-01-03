@@ -25,6 +25,10 @@ else
     audioconf := -include $(srctree)/techpack/audio/config/sdm450autoconf.h
     include $(srctree)/techpack/audio/config/sdm450auto.conf
     export $(shell sed 's/=.*//' $(srctree)/techpack/audio/config/sdm450auto.conf)
+  else ifeq ($(CONFIG_ARCH_MSM8976),y)
+    audioconf := -include $(srctree)/techpack/audio/config/sdm450autoconf.h
+    include $(srctree)/techpack/audio/config/sdm450auto.conf
+    export $(shell sed 's/=.*//' $(srctree)/techpack/audio/config/sdm450auto.conf)
   else ifeq ($(CONFIG_ARCH_MSM8953),y)
     audioconf := -include $(srctree)/techpack/audio/config/sdm450autoconf.h
     include $(srctree)/techpack/audio/config/sdm450auto.conf

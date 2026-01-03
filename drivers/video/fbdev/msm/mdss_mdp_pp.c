@@ -2319,8 +2319,7 @@ static int pp_dspp_setup(u32 disp_num, struct mdss_mdp_mixer *mixer)
 	mdata = ctl->mdata;
 	dspp_num = mixer->num;
 	/* no corresponding dspp */
-	if ((mixer->type != MDSS_MDP_MIXER_TYPE_INTF) ||
-		(dspp_num >= mdata->ndspp))
+	if (mixer->type != MDSS_MDP_MIXER_TYPE_INTF)
 		return -EINVAL;
 	base = mdss_mdp_get_dspp_addr_off(dspp_num);
 	if (IS_ERR(base))
@@ -7524,6 +7523,7 @@ static int pp_get_driver_ops(struct mdp_pp_driver_ops *ops)
 	case MDSS_MDP_HW_REV_107:
 	case MDSS_MDP_HW_REV_107_1:
 	case MDSS_MDP_HW_REV_107_2:
+	case MDSS_MDP_HW_REV_111:
 	case MDSS_MDP_HW_REV_114:
 	case MDSS_MDP_HW_REV_115:
 	case MDSS_MDP_HW_REV_116:
