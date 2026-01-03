@@ -12,6 +12,7 @@
  */
 
 #include "skeleton64.dtsi"
+#include <dt-bindings/gpio/gpio.h>
 #include <dt-bindings/spmi/spmi.h>
 #include <dt-bindings/clock/msm-clocks-8976.h>
 #include <dt-bindings/interrupt-controller/arm-gic.h>
@@ -25,7 +26,7 @@
 	interrupt-parent = <&wakegic>;
 
 	chosen {
-		bootargs = "kpti=0";
+		bootargs = "kpti=0 cgroup.memory=nokmem,nosocket";
 	};
 
 	aliases {
