@@ -157,10 +157,10 @@
 		qcom,modify-soc-smooth;
 	};
 
-	pic16f-vooc@25 {
+	stm8s-vooc@26 {
 		status = "okay";
-		compatible = "oppo,pic16f-vooc";
-		reg = <0x25>;
+		compatible = "oppo,stm8s-vooc";
+		reg = <0x26>;
 
 		switch-gpios = <&tlmm 50 GPIO_ACTIVE_HIGH>,
 			       <&tlmm 9 GPIO_ACTIVE_HIGH>;
