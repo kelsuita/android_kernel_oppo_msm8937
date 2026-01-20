@@ -712,6 +712,7 @@ endif # CONFIG_MACH_OPPO
 
 dtb-$(CONFIG_MACH_16017) += msm8953-mtp_16017.dtb
 dtb-$(CONFIG_MACH_16027) += msm8953-mtp_16027.dtb
+dtb-$(CONFIG_MACH_16037) += msm8976-v1.1-qrd-skun_16037.dtb
 dtb-$(CONFIG_MACH_16061) += msm8940-pmi8950-mtp_16061.dtb
 
 always		:= $(dtb-y)
