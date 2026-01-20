@@ -515,10 +515,12 @@ int mdss_smmu_fault_handler(struct iommu_domain *domain, struct device *dev,
 
 		mdss_mdp_debug_mid(mid);
 	} else {
+#ifndef CONFIG_MACH_OPPO_MSM8976
 		pr_err("mdss_smmu: iova:0x%lx flags:0x%x\n",
 			iova, flags);
 		MDSS_XLOG_TOUT_HANDLER("mdp", "vbif", "dsi0_ctrl",
 				"dsi0_phy");
+#endif
 	}
 end:
 	return -ENODEV;

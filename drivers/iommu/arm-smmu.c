@@ -1178,12 +1178,14 @@ static void arm_smmu_tlb_sync_cb(struct arm_smmu_device *smmu,
 	u32 val;
 
 	writel_relaxed(0, base + ARM_SMMU_CB_TLBSYNC);
+#ifndef CONFIG_MACH_OPPO_MSM8976
 	if (readl_poll_timeout_atomic(base + ARM_SMMU_CB_TLBSTATUS, val,
 				      !(val & TLBSTATUS_SACTIVE),
 				      0, TLB_LOOP_TIMEOUT)) {
 		trace_tlbsync_timeout(smmu->dev, 0);
 		dev_err(smmu->dev, "TLBSYNC timeout!\n");
 	}
+#endif
 }
 
 static void __arm_smmu_tlb_sync(struct arm_smmu_device *smmu)
@@ -1549,7 +1551,9 @@ static irqreturn_t arm_smmu_context_fault(int irq, void *dev)
 		if (!non_fatal_fault) {
 			dev_err(smmu->dev,
 				"Unhandled arm-smmu context fault!\n");
+#ifndef CONFIG_MACH_OPPO_MSM8976
 			BUG();
+#endif
 		}
 	}
 
