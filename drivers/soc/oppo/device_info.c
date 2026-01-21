@@ -37,6 +37,7 @@ static struct of_device_id devinfo_id[] = {
 
 struct devinfo_data { 
 	struct platform_device *devinfo;
+	int hw_id0_gpio;
 	int hw_id1_gpio;
 	int hw_id2_gpio;
 	int hw_id3_gpio;
@@ -199,6 +200,7 @@ static int get_hw_opreator_version(struct devinfo_data *devinfo_data)
 {
 	int hw_operator_name = 0;
 	int ret;
+	int id0 = -1;
 	int id1 = -1;
 	int id2 = -1;
 	int id3 = -1;
@@ -210,6 +212,11 @@ static int get_hw_opreator_version(struct devinfo_data *devinfo_data)
 	}
 
 	np = devinfo_data->devinfo->dev.of_node;
+
+	devinfo_data->hw_id0_gpio = of_get_named_gpio(
+			np, "Hw,operator-gpio0", 0);
+	if (devinfo_data->hw_id0_gpio < 0)
+		pr_err("devinfo_data->hw_id0_gpio not specified\n");
 
 	devinfo_data->hw_id1_gpio = of_get_named_gpio(
 			np, "Hw,operator-gpio1", 0);
@@ -225,6 +232,14 @@ static int get_hw_opreator_version(struct devinfo_data *devinfo_data)
 			np, "Hw,operator-gpio3", 0);
 	if (devinfo_data->hw_id3_gpio < 0)
 		pr_err("devinfo_data->hw_id3_gpio not specified\n");
+
+	if (devinfo_data->hw_id0_gpio >= 0) {
+		ret = gpio_request(devinfo_data->hw_id0_gpio,"HW_ID0");
+		if (ret)
+			pr_err("unable to request gpio [%d]\n",devinfo_data->hw_id0_gpio);
+		else
+			id0 = gpio_get_value(devinfo_data->hw_id0_gpio);
+ 	}
 
 	if (devinfo_data->hw_id1_gpio >= 0) {
 		ret = gpio_request(devinfo_data->hw_id1_gpio,"HW_ID1");
@@ -258,6 +273,17 @@ static int get_hw_opreator_version(struct devinfo_data *devinfo_data)
 			mainboard_res = MAINBOARD_RESOURCE2;
 		else
 			hw_operator_name = OPERATOR_UNKOWN;
+	} else if (is_project(OPPO_16037)) {
+		if ((id0==1) && (id1==1) && (id2==1) && (id3==1))
+			hw_operator_name = OPERATOR_ALL_CHINA_CARRIER;
+		else if ((id0==1) && (id1==1) && (id2==1) && (id3==0))
+			hw_operator_name = OPERATOR_ALL_CHINA_CARRIER;
+		else if ((id0==1) && (id1==0) && (id2==1) && (id3==1))
+			hw_operator_name = OPERATOR_ALL_CHINA_CARRIER_MOBILE;
+		else if ((id0==0) && (id1==1) && (id2==1) && (id3==1))
+			hw_operator_name = OPERATOR_ALL_CHINA_CARRIER_MOBILE;
+		else
+			hw_operator_name = OPERATOR_UNKOWN;
 	}
 	pr_info("hw_operator_name [%d]\n",hw_operator_name);
 	return hw_operator_name;
@@ -267,6 +293,7 @@ static void sub_mainboard_verify(struct devinfo_data *devinfo_data)
 {
 	int ret;
 	int id1 = -1;
+	int id2 = -1;
 	static char temp_manufacture_sub[INFO_BUF_LEN] = {0};
 	struct device_node *np;
 	struct manufacture_info mainboard_info;
@@ -282,12 +309,24 @@ static void sub_mainboard_verify(struct devinfo_data *devinfo_data)
 	if (devinfo_data->sub_hw_id1 < 0)
 		pr_err("devinfo_data->sub_hw_id1 not specified\n");
 
+	devinfo_data->sub_hw_id2 = of_get_named_gpio(np, "Hw,sub_hwid_2", 0);
+	if (devinfo_data->sub_hw_id2 < 0)
+		pr_err("devinfo_data->sub_hw_id2 not specified\n");
+
 	if (devinfo_data->sub_hw_id1 >= 0) {
 		ret = gpio_request(devinfo_data->sub_hw_id1, "SUB_HW_ID1");
 		if (ret)
 			pr_err("unable to request gpio [%d]\n", devinfo_data->sub_hw_id1);
 		else
 			id1 = gpio_get_value(devinfo_data->sub_hw_id1);	
+ 	}
+
+ 	if (devinfo_data->sub_hw_id2 >= 0) {
+		ret = gpio_request(devinfo_data->sub_hw_id2, "SUB_HW_ID2");
+		if (ret)
+			pr_err("unable to request gpio [%d]\n", devinfo_data->sub_hw_id2);
+		else
+			id2 = gpio_get_value(devinfo_data->sub_hw_id2);
  	}
 
 	mainboard_info.manufacture = temp_manufacture_sub;
