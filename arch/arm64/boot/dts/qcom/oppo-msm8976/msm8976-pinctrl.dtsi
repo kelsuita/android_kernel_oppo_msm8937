@@ -405,12 +405,12 @@
 		ak4376 {
 			ak4376_vdd_default: ak4376_vdd_default {
 				mux {
-					pins = "gpio18";
+					pins = "gpio36";
 					function = "gpio";
 				};
 
 				config {
-					pins = "gpio18";
+					pins = "gpio36";
 					drive-strength = <8>;
 					output-high;
 					bias-pull-up;
@@ -436,24 +436,24 @@
 		ext-cdc-tlmm-quin-i2s-mclk {
 			ext_cdc_tlmm_quin_i2s_mclk_act: ext_cdc_tlmm_quin_i2s_mclk_act {
 				mux {
-					pins = "gpio25";	/*quin i2s mclk*/
+					pins = "gpio126";	/*quin i2s mclk*/
 					function = "pri_mi2s_mclk_a";
 				};
 
 				config {
-					pins = "gpio25";
+					pins = "gpio126";
 					drive-strength = <8>;
 				};
 			};
 
 			ext_cdc_tlmm_quin_i2s_mclk_sus: ext_cdc_tlmm_quin_i2s_mclk_sus {
 				mux {
-					pins = "gpio25";	/* quin i2s mclk */
+					pins = "gpio126";	/* quin i2s mclk */
 					function = "pri_mi2s_mclk_a";
 				};
 
 				config {
-					pins = "gpio25";
+					pins = "gpio126";
 					drive-strength = <2>;
 					bias-disable;
 				};
