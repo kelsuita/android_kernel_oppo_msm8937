@@ -893,9 +893,11 @@ static int synaptics_enable_interrupt_for_gesture(struct synaptics_ts_data *ts, 
 		TPD_DEBUG("read reg F12_2D_CTRL20 failed\n");
 		return -1;
 	}
+#ifndef CONFIG_MACH_16037
 	ret = i2c_smbus_read_i2c_block_data( ts->client, F12_2D_CTRL27, 4, &(val[0x0]) );
 	val[0] = 0xef;
 	ret = i2c_smbus_write_i2c_block_data( ts->client, F12_2D_CTRL27, 4, &(val[0x0]) );
+#endif
 	
 	
 	if( enable ) {

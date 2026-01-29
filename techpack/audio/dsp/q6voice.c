@@ -4369,6 +4369,11 @@ static int voice_get_avcs_version_per_service(uint32_t service_id)
 		return -EINVAL;
 	}
 
+#ifdef CONFIG_ARCH_MSM8976
+	common.is_avcs_version_queried = true;
+	return CVP_VERSION_1;
+#endif
+
 	ver_size = sizeof(struct avcs_get_fwk_version) +
 		   sizeof(struct avs_svc_api_info);
 	ver_info = kzalloc(ver_size, GFP_KERNEL);
