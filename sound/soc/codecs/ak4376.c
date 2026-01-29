@@ -1455,8 +1455,6 @@ static int ak4376_init_reg(struct snd_soc_codec *codec)
 		printk("This device are neither AK4375/A nor AK4376.\n");
 	}
 
-	ak4376_set_bias_level(codec, SND_SOC_BIAS_STANDBY);
-
 	akdbgprt("\t[AK4376 bias] %s(%d)\n",__FUNCTION__,__LINE__);
 
 	return 0;
