@@ -53,6 +53,10 @@
 	};
 };
 
+&mdss_fb0 {
+	/delete-node/ qcom,cont-splash-memory;
+};
+
 &mdss_dsi0 {
 	pinctrl-names = "mdss_default", "mdss_sleep";
 	pinctrl-0 = <&mdss_dsi_active &mdss_te_active>;
@@ -76,3 +80,5 @@
 &ibb_regulator {
 	qcom,qpnp-ibb-discharge-resistor = <32>;
 };
+
+/delete-node/ &cont_splash_mem;
