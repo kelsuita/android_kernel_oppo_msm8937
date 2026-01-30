@@ -25,15 +25,15 @@
 #include <linux/spmi.h>
 #include <linux/platform_device.h>
 #include <linux/mutex.h>
-#include <linux/msm_bcl.h>
+#include <linux/msm_bcl_legacy.h>
 #include <linux/power_supply.h>
 #include <linux/thermal.h>
 
 #include "../thermal_core.h"
 
 #define BCL_DRIVER_NAME       "bcl_peripheral_legacy"
-#define BCL_VBAT_INT          "bcl-low-vbat"
-#define BCL_IBAT_INT          "bcl-high-ibat"
+#define BCL_VBAT_INT          "bcl-low-vbat-int"
+#define BCL_IBAT_INT          "bcl-high-ibat-int"
 #define BCL_MONITOR_EN        0x46
 #define BCL_VBAT_MIN          0x58
 #define BCL_IBAT_MAX          0x59
