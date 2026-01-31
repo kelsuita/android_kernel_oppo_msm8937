@@ -1711,7 +1711,8 @@ static int venus_hfi_scale_clocks(void *dev, int load,
 
 	mutex_lock(&device->lock);
 
-	device->clk_freq = __get_clock_rate(device, load, data);
+	if (msm_vidc_regulator_scaling)
+		device->clk_freq = __get_clock_rate(device, load, data);
 
 	rc = __scale_regulators(device, data);
 	if (rc) {
