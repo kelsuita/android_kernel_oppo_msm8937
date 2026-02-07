@@ -710,6 +710,7 @@ dtb-$(CONFIG_ARCH_SDM845_VM) += sdm845-vm.dtb
 
 endif # CONFIG_MACH_OPPO
 
+dtb-$(CONFIG_MACH_15103) += msm8976-v1.1-qrd-skun_15103.dtb
 dtb-$(CONFIG_MACH_16017) += msm8953-mtp_16017.dtb
 dtb-$(CONFIG_MACH_16027) += msm8953-mtp_16027.dtb
 dtb-$(CONFIG_MACH_16037) += msm8976-v1.1-qrd-skun_16037.dtb

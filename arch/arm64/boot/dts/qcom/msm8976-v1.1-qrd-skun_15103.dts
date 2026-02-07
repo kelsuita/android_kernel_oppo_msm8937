@@ -14,7 +14,7 @@
 /dts-v1/;
 #include "msm8976-v1.1.dtsi"
 #include "oppo-msm8976/msm8976-mtp.dtsi"
-#include "oppo-msm8976/16037/msm8976-mtp.dtsi"
+#include "oppo-msm8976/15103/msm8976-mtp.dtsi"
 
 / {
 	/*
@@ -25,7 +25,7 @@
 	model = "Qualcomm Technologies, Inc. MSM8976v1.1 QRD SKUN";
 	compatible = "qcom,msm8976-qrd-skun", "qcom,msm8976-qrd",
 		   "qcom,msm8976", "qcom,qrd";
-	qcom,board-id= <8 0>;
+	qcom,board-id= <8 0 15103>;
 
 	mtp_batterydata: qcom,battery-data {
 		qcom,batt-id-range-pct = <15>;
