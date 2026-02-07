@@ -2333,9 +2333,9 @@ static int synaptics_ts_probe(struct i2c_client *client, const struct i2c_device
 	TPD_DAILY("CURRENT_FIRMWARE_ID = 0x%x\n", CURRENT_FIRMWARE_ID);
     sprintf(ts->fw_id,"0x%x",CURRENT_FIRMWARE_ID);
 
-	memset(ts->fw_name,TP_FW_NAME_MAX_LEN,0);
+	memset(ts->fw_name, 0, TP_FW_NAME_MAX_LEN);
 	strcpy(ts->fw_name,"tp/16017/16017_Firmware_touchkey.img");
-	memset(ts->test_limit_name,TP_FW_NAME_MAX_LEN,0); 
+	memset(ts->test_limit_name, 0, TP_FW_NAME_MAX_LEN);
 	strcpy(ts->test_limit_name,"tp/16017/16017_key_Limit_Samsung.img");
 	TPD_DEBUG("touch_key fw : fw_name = %s  limit_name =%s \n",ts->fw_name,ts->test_limit_name);
 	touch_key_info.version = ts->fw_id;
