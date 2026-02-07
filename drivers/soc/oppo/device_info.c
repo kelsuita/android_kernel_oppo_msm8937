@@ -273,6 +273,15 @@ static int get_hw_opreator_version(struct devinfo_data *devinfo_data)
 			mainboard_res = MAINBOARD_RESOURCE2;
 		else
 			hw_operator_name = OPERATOR_UNKOWN;
+	} else if (is_project(OPPO_15103)) {
+		if ((id1==1) && (id2==1) && (id3==1))
+			hw_operator_name = OPERATOR_ALL_CHINA_CARRIER;
+		else if ((id1==0) && (id2==1) && (id3==1))
+			hw_operator_name = OPERATOR_CHINA_MOBILE;
+		else if ((id1==0) && (id2==1) && (id3==0))
+			mainboard_res = MAINBOARD_RESOURCE2;
+		else
+			hw_operator_name = OPERATOR_UNKOWN;
 	} else if (is_project(OPPO_16037)) {
 		if ((id0==1) && (id1==1) && (id2==1) && (id3==1))
 			hw_operator_name = OPERATOR_ALL_CHINA_CARRIER;
