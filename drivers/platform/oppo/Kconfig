@@ -29,6 +29,12 @@ config MACH_OPPO_MSM8976
 
 menu "OPPO board selection"
 
+config MACH_15103
+	bool "R9 Plus board"
+	select MACH_OPPO_MSM8976
+	help
+	  Support for R9 Plus variants
+
 config MACH_16017
 	bool "R9s board"
 	select MACH_OPPO_MSM8953
