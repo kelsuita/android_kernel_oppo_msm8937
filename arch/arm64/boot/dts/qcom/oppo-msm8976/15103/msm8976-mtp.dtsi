@@ -11,9 +11,12 @@
  * GNU General Public License for more details.
  */
 
-#include "msm8976.dtsi"
 #include "msm8976-pinctrl.dtsi"
 #include "msm8976-camera-sensor-mtp.dtsi"
+
+&reloc_mem {
+	reg = <0x0 0x8c200000 0x0 0x2000000>;
+};
 
 &i2c_2 { /* BLSP1 QUP2 */
 	synaptics-rmi-ts@20 {

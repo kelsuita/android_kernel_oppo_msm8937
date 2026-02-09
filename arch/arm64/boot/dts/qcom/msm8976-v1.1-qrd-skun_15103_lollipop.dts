@@ -25,13 +25,36 @@
 	model = "Qualcomm Technologies, Inc. MSM8976v1.1 QRD SKUN";
 	compatible = "qcom,msm8976-qrd-skun", "qcom,msm8976-qrd",
 		   "qcom,msm8976", "qcom,qrd";
-	qcom,board-id= <8 0>;
+	qcom,board-id= <8 0 15103>; // NOTE: Lollipop bootloader used OPPO_PROJECT hax in QCDT.
 
 	mtp_batterydata: qcom,battery-data {
 		qcom,batt-id-range-pct = <15>;
 		#include "batterydata-itech-3000mah-4200mv.dtsi"
 		#include "batterydata-itech-3000mah.dtsi"
 	};
+
+	/*
+	 * Reserved memory region changes
+	 */
+	other_ext_mem: other_ext_region@85b00000 {
+		reg = <0x0 0x85e00000 0x0 0xa00000>;
+	};
+
+	reloc_mem: reloc_region@8c200000 {
+		reg = <0x0 0x8c200000 0x0 0x1700000>;
+	};
+
+	tzapp_mem: tzapp_region@0 {
+		compatible = "removed-dma-pool";
+		no-map;
+		reg = <0x0 0x8d900000 0x0 0x2400000>;
+	};
+};
+
+/* For loading QSEE KM apps */
+&qcom_seecom {
+	reg = <0x8d900000 0x2400000>;
+	/delete-property/ qcom,appsbl-qseecom-support;
 };
 
 &qpnp_fg {
