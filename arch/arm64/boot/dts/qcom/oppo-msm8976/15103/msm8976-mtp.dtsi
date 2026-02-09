@@ -131,6 +131,24 @@
 #include "dsi-panel-oppo15103samsung_ea8064_1080p_cmd.dtsi"
 #include "dsi-panel-oppo15103samsung_ea8064_1080p_video.dtsi"
 
+&mdss_dsi_active {
+	mux {
+		pins = "gpio25" , "gpio128";
+	};
+	config {
+		pins = "gpio25" , "gpio128";
+	};
+};
+
+&mdss_dsi_suspend {
+	mux {
+		pins = "gpio25" , "gpio128";
+	};
+	config {
+		pins = "gpio25" , "gpio128";
+	};
+};
+
 &mdss_dsi0 {
 	qcom,dsi-pref-prim-pan = <&dsi_samsung_oppo15103_ea8064_1080p_cmd>;
 };
