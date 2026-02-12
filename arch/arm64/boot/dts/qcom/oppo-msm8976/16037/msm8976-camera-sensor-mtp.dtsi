@@ -15,6 +15,7 @@
 	led_flash0: qcom,camera-flash {
 		cell-index = <0>;
 		compatible = "qcom,camera-flash";
+		qcom,flash-name = "lm3643";
 		qcom,flash-type = <1>;
 		qcom,cci-master = <0>;
 		cam_vio-supply = <&pm8950_l22>;
