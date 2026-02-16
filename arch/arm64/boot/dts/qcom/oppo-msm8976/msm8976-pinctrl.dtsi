@@ -172,34 +172,6 @@
 			};
 		};
 
-		cam_sensor_flash_cntrol: cam_sensor_flash_cntrol {
-			/* Flash */
-			mux {
-				pins = "gpio32";
-				function = "gpio";
-			};
-
-			config {
-				pins = "gpio32";
-				bias-disable; /* No PULL */
-				drive-strength = <2>; /* 2 MA */
-			};
-		};
-
-		cam_sensor_flash_cntrol_sleep: cam_sensor_flash_cntrol_sleep {
-			/* Flash */
-			mux {
-				pins = "gpio32";
-				function = "gpio";
-			};
-
-			config {
-				pins = "gpio32";
-				bias-disable; /* No PULL */
-				drive-strength = <2>; /* 2 MA */
-			};
-		};
-
 		cam_sensor_front_default: cam_sensor_front_default {
 			/* RESET, STANDBY */
 			mux {
