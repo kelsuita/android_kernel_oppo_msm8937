@@ -119,6 +119,8 @@ static int mdss_dsi_generic_lwrite(struct dsi_buf *dp, struct dsi_cmd_desc *cm)
 
 	/* fill up header */
 	hp = dp->hdr;
+	if (!hp) return 0;
+
 	*hp = 0;
 	*hp = DSI_HDR_WC(dchdr->dlen);
 	*hp |= DSI_HDR_VC(dchdr->vc);
@@ -150,6 +152,8 @@ static int mdss_dsi_generic_swrite(struct dsi_buf *dp, struct dsi_cmd_desc *cm)
 
 	mdss_dsi_buf_reserve_hdr(dp, DSI_HOST_HDR_SIZE);
 	hp = dp->hdr;
+	if (!hp) return 0;
+
 	*hp = 0;
 	*hp |= DSI_HDR_VC(dchdr->vc);
 	if (dchdr->last)
@@ -193,6 +197,8 @@ static int mdss_dsi_generic_read(struct dsi_buf *dp, struct dsi_cmd_desc *cm)
 
 	mdss_dsi_buf_reserve_hdr(dp, DSI_HOST_HDR_SIZE);
 	hp = dp->hdr;
+	if (!hp) return 0;
+
 	*hp = 0;
 	*hp |= DSI_HDR_VC(dchdr->vc);
 	*hp |= DSI_HDR_BTA;
@@ -252,6 +258,8 @@ static int mdss_dsi_dcs_lwrite(struct dsi_buf *dp, struct dsi_cmd_desc *cm)
 
 	/* fill up header */
 	hp = dp->hdr;
+	if (!hp) return 0;
+
 	*hp = 0;
 	*hp = DSI_HDR_WC(dchdr->dlen);
 	*hp |= DSI_HDR_VC(dchdr->vc);
@@ -283,6 +291,8 @@ static int mdss_dsi_dcs_swrite(struct dsi_buf *dp, struct dsi_cmd_desc *cm)
 
 	mdss_dsi_buf_reserve_hdr(dp, DSI_HOST_HDR_SIZE);
 	hp = dp->hdr;
+	if (!hp) return 0;
+
 	*hp = 0;
 	*hp |= DSI_HDR_VC(dchdr->vc);
 	if (dchdr->ack)		/* ask ACK trigger msg from peripeheral */
@@ -316,6 +326,8 @@ static int mdss_dsi_dcs_swrite1(struct dsi_buf *dp, struct dsi_cmd_desc *cm)
 
 	mdss_dsi_buf_reserve_hdr(dp, DSI_HOST_HDR_SIZE);
 	hp = dp->hdr;
+	if (!hp) return 0;
+
 	*hp = 0;
 	*hp |= DSI_HDR_VC(dchdr->vc);
 	if (dchdr->ack)		/* ask ACK trigger msg from peripeheral */
@@ -347,6 +359,8 @@ static int mdss_dsi_dcs_read(struct dsi_buf *dp, struct dsi_cmd_desc *cm)
 
 	mdss_dsi_buf_reserve_hdr(dp, DSI_HOST_HDR_SIZE);
 	hp = dp->hdr;
+	if (!hp) return 0;
+
 	*hp = 0;
 	*hp |= DSI_HDR_VC(dchdr->vc);
 	*hp |= DSI_HDR_BTA;
@@ -369,6 +383,8 @@ static int mdss_dsi_cm_on(struct dsi_buf *dp, struct dsi_cmd_desc *cm)
 	dchdr = &cm->dchdr;
 	mdss_dsi_buf_reserve_hdr(dp, DSI_HOST_HDR_SIZE);
 	hp = dp->hdr;
+	if (!hp) return 0;
+
 	*hp = 0;
 	*hp |= DSI_HDR_VC(dchdr->vc);
 	*hp |= DSI_HDR_DTYPE(DTYPE_CM_ON);
@@ -409,6 +425,8 @@ static int mdss_dsi_dsc_pps(struct dsi_buf *dp, struct dsi_cmd_desc *cm)
 
 	/* fill up header */
 	hp = dp->hdr;
+	if (!hp) return 0;
+
 	*hp = 0;
 	*hp = DSI_HDR_WC(dchdr->dlen);
 	*hp |= DSI_HDR_VC(dchdr->vc);
@@ -431,6 +449,8 @@ static int mdss_dsi_cm_off(struct dsi_buf *dp, struct dsi_cmd_desc *cm)
 	dchdr = &cm->dchdr;
 	mdss_dsi_buf_reserve_hdr(dp, DSI_HOST_HDR_SIZE);
 	hp = dp->hdr;
+	if (!hp) return 0;
+
 	*hp = 0;
 	*hp |= DSI_HDR_VC(dchdr->vc);
 	*hp |= DSI_HDR_DTYPE(DTYPE_CM_OFF);
@@ -449,6 +469,8 @@ static int mdss_dsi_peripheral_on(struct dsi_buf *dp, struct dsi_cmd_desc *cm)
 	dchdr = &cm->dchdr;
 	mdss_dsi_buf_reserve_hdr(dp, DSI_HOST_HDR_SIZE);
 	hp = dp->hdr;
+	if (!hp) return 0;
+
 	*hp = 0;
 	*hp |= DSI_HDR_VC(dchdr->vc);
 	*hp |= DSI_HDR_DTYPE(DTYPE_PERIPHERAL_ON);
@@ -467,6 +489,8 @@ static int mdss_dsi_peripheral_off(struct dsi_buf *dp, struct dsi_cmd_desc *cm)
 	dchdr = &cm->dchdr;
 	mdss_dsi_buf_reserve_hdr(dp, DSI_HOST_HDR_SIZE);
 	hp = dp->hdr;
+	if (!hp) return 0;
+
 	*hp = 0;
 	*hp |= DSI_HDR_VC(dchdr->vc);
 	*hp |= DSI_HDR_DTYPE(DTYPE_PERIPHERAL_OFF);
@@ -490,6 +514,8 @@ static int mdss_dsi_set_max_pktsize(struct dsi_buf *dp, struct dsi_cmd_desc *cm)
 
 	mdss_dsi_buf_reserve_hdr(dp, DSI_HOST_HDR_SIZE);
 	hp = dp->hdr;
+	if (!hp) return 0;
+
 	*hp = 0;
 	*hp |= DSI_HDR_VC(dchdr->vc);
 	*hp |= DSI_HDR_DTYPE(DTYPE_MAX_PKTSIZE);
@@ -517,6 +543,8 @@ static int mdss_dsi_compression_mode(struct dsi_buf *dp,
 
 	mdss_dsi_buf_reserve_hdr(dp, DSI_HOST_HDR_SIZE);
 	hp = dp->hdr;
+	if (!hp) return 0;
+
 	*hp = 0;
 	*hp |= DSI_HDR_VC(dchdr->vc);
 	*hp |= DSI_HDR_DTYPE(DTYPE_COMPRESSION_MODE);
@@ -538,6 +566,8 @@ static int mdss_dsi_null_pkt(struct dsi_buf *dp, struct dsi_cmd_desc *cm)
 	dchdr = &cm->dchdr;
 	mdss_dsi_buf_reserve_hdr(dp, DSI_HOST_HDR_SIZE);
 	hp = dp->hdr;
+	if (!hp) return 0;
+
 	*hp = 0;
 	*hp = DSI_HDR_WC(dchdr->dlen);
 	*hp |= DSI_HDR_LONG_PKT;
@@ -558,6 +588,8 @@ static int mdss_dsi_blank_pkt(struct dsi_buf *dp, struct dsi_cmd_desc *cm)
 	dchdr = &cm->dchdr;
 	mdss_dsi_buf_reserve_hdr(dp, DSI_HOST_HDR_SIZE);
 	hp = dp->hdr;
+	if (!hp) return 0;
+
 	*hp = 0;
 	*hp = DSI_HDR_WC(dchdr->dlen);
 	*hp |= DSI_HDR_LONG_PKT;

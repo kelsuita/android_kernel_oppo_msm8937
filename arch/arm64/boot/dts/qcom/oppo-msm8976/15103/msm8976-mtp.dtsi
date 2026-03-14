@@ -15,6 +15,10 @@
 #include "msm8976-pinctrl.dtsi"
 #include "msm8976-camera-sensor-mtp.dtsi"
 
+&reloc_mem {
+	reg = <0x0 0x8c200000 0x0 0x2000000>;
+};
+
 &i2c_2 { /* BLSP1 QUP2 */
 	synaptics-rmi-ts@20 {
 		compatible = "synaptics,s1302";
@@ -130,6 +134,24 @@
 /* MDSS panels for 15103 */
 #include "dsi-panel-oppo15103samsung_ea8064_1080p_cmd.dtsi"
 #include "dsi-panel-oppo15103samsung_ea8064_1080p_video.dtsi"
+
+&mdss_dsi_active {
+	mux {
+		pins = "gpio25" , "gpio128";
+	};
+	config {
+		pins = "gpio25" , "gpio128";
+	};
+};
+
+&mdss_dsi_suspend {
+	mux {
+		pins = "gpio25" , "gpio128";
+	};
+	config {
+		pins = "gpio25" , "gpio128";
+	};
+};
 
 &mdss_dsi0 {
 	qcom,dsi-pref-prim-pan = <&dsi_samsung_oppo15103_ea8064_1080p_cmd>;

@@ -330,6 +330,7 @@ static int32_t msm_flash_i2c_init(
 		goto msm_flash_i2c_init_fail;
 	}
 
+#ifndef CONFIG_MACH_OPPO
 	if (flash_data->cfg.flash_init_info->settings) {
 		settings = kzalloc(sizeof(
 			struct msm_camera_i2c_reg_setting_array), GFP_KERNEL);
@@ -355,6 +356,7 @@ static int32_t msm_flash_i2c_init(
 				__func__, __LINE__, rc);
 		}
 	}
+#endif
 
 	return 0;
 
@@ -519,6 +521,34 @@ static int32_t msm_flash_lm3642_setting(
 	CDBG("Exit\n");
 	return rc;
 }
+
+static int32_t msm_flash_lm3643_setting(
+	struct msm_flash_ctrl_t *flash_ctrl,
+	struct msm_flash_cfg_data_t *flash_data)
+{
+	int32_t rc = 0;
+	struct msm_camera_power_ctrl_t *power_info = &flash_ctrl->power_info;
+
+	CDBG("Enter\n");
+
+	switch (flash_data->cfg_type) {
+		case CFG_FLASH_OFF:
+			gpio_set_value_cansleep(
+				power_info->gpio_conf->gpio_num_info->
+				gpio_num[SENSOR_GPIO_FL_EN],
+				GPIO_OUT_LOW);
+			break;
+		default:
+			gpio_set_value_cansleep(
+				power_info->gpio_conf->gpio_num_info->
+				gpio_num[SENSOR_GPIO_FL_EN],
+				GPIO_OUT_HIGH);
+			break;
+	}
+
+	CDBG("Exit\n");
+	return rc;
+}
 #endif
 
 static int32_t msm_flash_i2c_write_setting_array(
@@ -550,6 +580,12 @@ static int32_t msm_flash_i2c_write_setting_array(
 #ifdef CONFIG_MACH_OPPO
 	if (strcmp(flash_ctrl->flash_name, "lm3642") == 0) {
 		msm_flash_lm3642_setting(flash_ctrl, flash_data);
+	}
+	if (strcmp(flash_ctrl->flash_name, "lm3643") == 0) {
+		gpio_set_value_cansleep(
+			flash_ctrl->power_info.gpio_conf->gpio_num_info->
+			gpio_num[SENSOR_GPIO_FL_EN],
+			GPIO_OUT_HIGH);
 	}
 #endif
 
@@ -1247,7 +1283,7 @@ static long msm_flash_subdev_fops_ioctl(struct file *file,
 #endif
 
 #ifdef CONFIG_MACH_OPPO
-struct msm_sensor_power_setting power_setting_a[] =
+struct msm_sensor_power_setting lm3642_power_setting_a[] =
 {
 	{
 		.seq_type = SENSOR_VREG,
@@ -1268,7 +1304,8 @@ struct msm_sensor_power_setting power_setting_a[] =
 		.delay = 1,
 	},
 };
-struct msm_sensor_power_setting power_down_setting_a[]=
+
+struct msm_sensor_power_setting lm3642_power_down_setting_a[]=
 {
 	{
 		.seq_type = SENSOR_VREG,
@@ -1289,7 +1326,40 @@ struct msm_sensor_power_setting power_down_setting_a[]=
 		.delay = 1,
 	},
 };
-struct msm_camera_i2c_reg_setting_array flash_init_settings =
+
+struct msm_sensor_power_setting lm3643_power_setting_a[] =
+{
+	{
+		.seq_type = SENSOR_VREG,
+		.seq_val = CAM_VIO,
+		.config_val = 0,
+		.delay = 0,
+	},
+	{
+		.seq_type = SENSOR_GPIO,
+		.seq_val = SENSOR_GPIO_FL_EN,
+		.config_val = GPIO_OUT_LOW,
+		.delay = 1,
+	},
+};
+
+struct msm_sensor_power_setting lm3643_power_down_setting_a[]=
+{
+	{
+		.seq_type = SENSOR_VREG,
+		.seq_val = CAM_VIO,
+		.config_val = 0,
+		.delay = 0,
+	},
+	{
+		.seq_type = SENSOR_GPIO,
+		.seq_val = SENSOR_GPIO_FL_EN,
+		.config_val = GPIO_OUT_LOW,
+		.delay = 1,
+	},
+};
+
+struct msm_camera_i2c_reg_setting_array lm3642_flash_init_settings =
 {
 	.reg_setting_a =
 	{
@@ -1301,7 +1371,7 @@ struct msm_camera_i2c_reg_setting_array flash_init_settings =
 	.delay = 0,
 };
 
-struct msm_camera_i2c_reg_setting_array flash_low_settings =
+struct msm_camera_i2c_reg_setting_array lm3642_flash_low_settings =
 {
 	.reg_setting_a =
 	{
@@ -1315,7 +1385,7 @@ struct msm_camera_i2c_reg_setting_array flash_low_settings =
 	.delay = 0,
 };
 
-struct msm_camera_i2c_reg_setting_array flash_high_settings =
+struct msm_camera_i2c_reg_setting_array lm3642_flash_high_settings =
 {
 	.reg_setting_a =
 	{
@@ -1329,7 +1399,7 @@ struct msm_camera_i2c_reg_setting_array flash_high_settings =
 	.delay = 0,
 };
 
-struct msm_camera_i2c_reg_setting_array flash_off_settings =
+struct msm_camera_i2c_reg_setting_array lm3642_flash_off_settings =
 {
 	.reg_setting_a =
 	{
@@ -1340,6 +1410,60 @@ struct msm_camera_i2c_reg_setting_array flash_off_settings =
 	.data_type = MSM_CAMERA_I2C_BYTE_DATA,
 	.delay = 0,
 };
+
+struct msm_camera_i2c_reg_setting_array lm3643_flash_init_settings =
+{
+	.reg_setting_a =
+	{
+		{0x01, 0x00, 0x00},
+	},
+	.size = 1,
+	.addr_type = MSM_CAMERA_I2C_BYTE_ADDR,
+	.data_type = MSM_CAMERA_I2C_BYTE_DATA,
+	.delay = 0,
+};
+
+struct msm_camera_i2c_reg_setting_array lm3643_flash_low_settings =
+{
+	.reg_setting_a =
+	{
+		{0x01, 0x0B, 0x00},
+		{0x05, 0x23, 0x00},
+		{0x06, 0x23, 0x00},
+	},
+	.size = 3,
+	.addr_type = MSM_CAMERA_I2C_BYTE_ADDR,
+	.data_type = MSM_CAMERA_I2C_BYTE_DATA,
+	.delay = 0,
+};
+
+struct msm_camera_i2c_reg_setting_array lm3643_flash_high_settings =
+{
+	.reg_setting_a =
+	{
+		{0x01, 0x0F, 0x00},
+		{0x03, 0x2A, 0x00},
+		{0x04, 0x2A, 0x00},
+		{0x08, 0x0F, 0x00},
+	},
+	.size = 4,
+	.addr_type = MSM_CAMERA_I2C_BYTE_ADDR,
+	.data_type = MSM_CAMERA_I2C_BYTE_DATA,
+	.delay = 0,
+};
+
+struct msm_camera_i2c_reg_setting_array lm3643_flash_off_settings =
+{
+	.reg_setting_a =
+	{
+		{0x01, 0x00, 0x00},
+	},
+	.size = 1,
+	.addr_type = MSM_CAMERA_I2C_BYTE_ADDR,
+	.data_type = MSM_CAMERA_I2C_BYTE_DATA,
+	.delay = 0,
+};
+
 struct regulator *vreg_vendor = NULL;
 volatile static int flash_mode = 0, pre_flash_mode = 0;
 bool cam_vio_enabled = false;
@@ -1387,7 +1511,7 @@ static ssize_t flash_on_off(void)
 				vendor_flash_ctrl->flash_i2c_client.i2c_func_tbl->i2c_util(
 					&vendor_flash_ctrl->flash_i2c_client, MSM_CCI_INIT);
 
-			rc = msm_flash_i2c_write_table(vendor_flash_ctrl, &flash_init_settings);
+			rc = msm_flash_i2c_write_table(vendor_flash_ctrl, &lm3642_flash_init_settings);
 			if (rc < 0) {
 				pr_err("%s write init setting failed %d\n",
 				__func__, __LINE__);
@@ -1395,7 +1519,7 @@ static ssize_t flash_on_off(void)
 
 			flash_data.cfg_type = CFG_FLASH_LOW;
 			msm_flash_lm3642_setting(vendor_flash_ctrl, &flash_data);
-			rc = msm_flash_i2c_write_table(vendor_flash_ctrl, &flash_low_settings);
+			rc = msm_flash_i2c_write_table(vendor_flash_ctrl, &lm3642_flash_low_settings);
 			if (rc < 0) {
 				pr_err("%s write low setting failed %d\n",
 				__func__, __LINE__);
@@ -1419,7 +1543,7 @@ static ssize_t flash_on_off(void)
 				vendor_flash_ctrl->flash_i2c_client.i2c_func_tbl->i2c_util(
 					&vendor_flash_ctrl->flash_i2c_client, MSM_CCI_INIT);
 
-			rc = msm_flash_i2c_write_table(vendor_flash_ctrl, &flash_init_settings);
+			rc = msm_flash_i2c_write_table(vendor_flash_ctrl, &lm3642_flash_init_settings);
 			if (rc < 0) {
 				pr_err("%s write init setting failed %d\n",
 				__func__, __LINE__);
@@ -1427,7 +1551,7 @@ static ssize_t flash_on_off(void)
 
 			flash_data.cfg_type = CFG_FLASH_HIGH;
 			msm_flash_lm3642_setting(vendor_flash_ctrl, &flash_data);
-			rc = msm_flash_i2c_write_table(vendor_flash_ctrl, &flash_high_settings);
+			rc = msm_flash_i2c_write_table(vendor_flash_ctrl, &lm3642_flash_high_settings);
 			if (rc < 0) {
 				pr_err("%s write high setting failed %d\n",
 				__func__, __LINE__);
@@ -1453,7 +1577,7 @@ static ssize_t flash_on_off(void)
 
 			flash_data.cfg_type = CFG_FLASH_OFF;
 			msm_flash_lm3642_setting(vendor_flash_ctrl, &flash_data);
-			rc = msm_flash_i2c_write_table(vendor_flash_ctrl, &flash_off_settings);
+			rc = msm_flash_i2c_write_table(vendor_flash_ctrl, &lm3642_flash_off_settings);
 			if (rc < 0) {
 				pr_err("%s write off setting failed %d\n",
 				__func__, __LINE__);
@@ -1466,6 +1590,115 @@ static ssize_t flash_on_off(void)
 				pr_err("%s legacy_m_msm_camera_power_down failed %d\n",
 				__func__, __LINE__);
 			}
+		}
+	}
+	else if (strcmp(vendor_flash_ctrl->flash_name, "lm3643") == 0) {
+		vendor_flash_ctrl->flash_i2c_client.cci_client->sid = 0xc6 >> 1;
+		vendor_flash_ctrl->flash_i2c_client.addr_type = MSM_CAMERA_I2C_BYTE_ADDR;
+
+		if (flash_mode == 1 || flash_mode == 3) {
+			if (!cam_vio_enabled) {
+				rc = msm_camera_power_up_vendor(&vendor_flash_ctrl->power_info,
+												vendor_flash_ctrl->flash_device_type,
+									&vendor_flash_ctrl->flash_i2c_client);
+				if (rc < 0) {
+					pr_err("%s msm_camera_power_up_vendor failed %d\n",
+						   __func__, __LINE__);
+				}
+			}
+
+			flash_data.cfg_type = CFG_FLASH_INIT;
+			msm_flash_lm3643_setting(vendor_flash_ctrl, &flash_data);
+
+			if (vendor_flash_ctrl->flash_device_type == MSM_CAMERA_PLATFORM_DEVICE)
+				vendor_flash_ctrl->flash_i2c_client.i2c_func_tbl->i2c_util(
+					&vendor_flash_ctrl->flash_i2c_client, MSM_CCI_INIT);
+
+			rc = msm_flash_i2c_write_table(vendor_flash_ctrl, &lm3643_flash_init_settings);
+			if (rc < 0) {
+				pr_err("%s write init setting failed %d\n",
+					   __func__, __LINE__);
+			}
+
+			flash_data.cfg_type = CFG_FLASH_LOW;
+			msm_flash_lm3643_setting(vendor_flash_ctrl, &flash_data);
+
+			rc = msm_flash_i2c_write_table(vendor_flash_ctrl, &lm3643_flash_low_settings);
+			if (rc < 0) {
+				pr_err("%s write low setting failed %d\n",
+					   __func__, __LINE__);
+			}
+
+			if (vendor_flash_ctrl->flash_device_type == MSM_CAMERA_PLATFORM_DEVICE)
+				vendor_flash_ctrl->flash_i2c_client.i2c_func_tbl->i2c_util(
+					&vendor_flash_ctrl->flash_i2c_client, MSM_CCI_RELEASE);
+		} else if (flash_mode == 2) {
+			if (!cam_vio_enabled) {
+				rc = msm_camera_power_up_vendor(&vendor_flash_ctrl->power_info,
+												vendor_flash_ctrl->flash_device_type,
+									&vendor_flash_ctrl->flash_i2c_client);
+				if (rc < 0) {
+					pr_err("%s msm_camera_power_up_vendor failed %d\n",
+						   __func__, __LINE__);
+				}
+			}
+
+			flash_data.cfg_type = CFG_FLASH_HIGH;
+			msm_flash_lm3643_setting(vendor_flash_ctrl, &flash_data);
+
+			if (vendor_flash_ctrl->flash_device_type == MSM_CAMERA_PLATFORM_DEVICE)
+				vendor_flash_ctrl->flash_i2c_client.i2c_func_tbl->i2c_util(
+					&vendor_flash_ctrl->flash_i2c_client, MSM_CCI_INIT);
+
+			rc = msm_flash_i2c_write_table(vendor_flash_ctrl, &lm3643_flash_init_settings);
+			if (rc < 0) {
+				pr_err("%s write init setting failed %d\n",
+					   __func__, __LINE__);
+			}
+
+			flash_data.cfg_type = CFG_FLASH_HIGH;
+			msm_flash_lm3643_setting(vendor_flash_ctrl, &flash_data);
+
+			rc = msm_flash_i2c_write_table(vendor_flash_ctrl, &lm3643_flash_high_settings);
+			if (rc < 0) {
+				pr_err("%s write high setting failed %d\n",
+					   __func__, __LINE__);
+			}
+
+			if (vendor_flash_ctrl->flash_device_type == MSM_CAMERA_PLATFORM_DEVICE)
+				vendor_flash_ctrl->flash_i2c_client.i2c_func_tbl->i2c_util(
+					&vendor_flash_ctrl->flash_i2c_client, MSM_CCI_RELEASE);
+		} else if (flash_mode == 0) {
+			if (!cam_vio_enabled) {
+				rc = msm_camera_power_up_vendor(&vendor_flash_ctrl->power_info,
+												vendor_flash_ctrl->flash_device_type,
+									&vendor_flash_ctrl->flash_i2c_client);
+				if (rc < 0) {
+					pr_err("%s msm_camera_power_up_vendor failed %d\n",
+						   __func__, __LINE__);
+				}
+			}
+
+			rc = msm_flash_i2c_write_table(vendor_flash_ctrl, &lm3643_flash_off_settings);
+			if (rc < 0) {
+				pr_err("%s write off setting failed %d\n",
+					   __func__, __LINE__);
+			}
+
+			flash_data.cfg_type = CFG_FLASH_OFF;
+			msm_flash_lm3643_setting(vendor_flash_ctrl, &flash_data);
+
+			rc = legacy_m_msm_camera_power_down(&vendor_flash_ctrl->power_info,
+												vendor_flash_ctrl->flash_device_type,
+									   &vendor_flash_ctrl->flash_i2c_client);
+			if (rc < 0) {
+				pr_err("%s legacy_m_msm_camera_power_down failed %d\n",
+					   __func__, __LINE__);
+			}
+
+			if (vendor_flash_ctrl->flash_device_type == MSM_CAMERA_PLATFORM_DEVICE)
+				vendor_flash_ctrl->flash_i2c_client.i2c_func_tbl->i2c_util(
+					&vendor_flash_ctrl->flash_i2c_client, MSM_CCI_RELEASE);
 		}
 	}
 	else if (strcmp(vendor_flash_ctrl->flash_name, "pmic") == 0)
@@ -1557,12 +1790,21 @@ static int flash_proc_init(struct msm_flash_ctrl_t *flash_ctl)
 		return 0;
 	}
 
-	vendor_flash_ctrl->power_info.power_setting = power_setting_a;
-	vendor_flash_ctrl->power_info.power_down_setting = power_down_setting_a;
-	vendor_flash_ctrl->power_info.power_setting_size =
-		sizeof(power_setting_a) / sizeof(power_setting_a[0]);
-	vendor_flash_ctrl->power_info.power_down_setting_size =
-		sizeof(power_down_setting_a) / sizeof(power_down_setting_a[0]);
+	if (strcmp(vendor_flash_ctrl->flash_name, "lm3642") == 0) {
+		vendor_flash_ctrl->power_info.power_setting = lm3642_power_setting_a;
+		vendor_flash_ctrl->power_info.power_down_setting = lm3642_power_down_setting_a;
+		vendor_flash_ctrl->power_info.power_setting_size =
+			sizeof(lm3642_power_setting_a) / sizeof(lm3642_power_setting_a[0]);
+		vendor_flash_ctrl->power_info.power_down_setting_size =
+			sizeof(lm3642_power_down_setting_a) / sizeof(lm3642_power_down_setting_a[0]);
+	} else if (strcmp(vendor_flash_ctrl->flash_name, "lm3643") == 0) {
+		vendor_flash_ctrl->power_info.power_setting = lm3643_power_setting_a;
+		vendor_flash_ctrl->power_info.power_down_setting = lm3643_power_down_setting_a;
+		vendor_flash_ctrl->power_info.power_setting_size =
+			sizeof(lm3643_power_setting_a) / sizeof(lm3643_power_setting_a[0]);
+		vendor_flash_ctrl->power_info.power_down_setting_size =
+			sizeof(lm3643_power_down_setting_a) / sizeof(lm3643_power_down_setting_a[0]);
+	}
 
 	cci_client = vendor_flash_ctrl->flash_i2c_client.cci_client;
 	cci_client->retries = 3;
