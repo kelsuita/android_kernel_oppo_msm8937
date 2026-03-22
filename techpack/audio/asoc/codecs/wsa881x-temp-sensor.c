@@ -80,9 +80,11 @@ temp_retry:
 	if (pdata->wsa_temp_reg_read) {
 		ret = pdata->wsa_temp_reg_read(codec, &reg);
 		if (ret) {
-			pr_err("%s: temperature register read failed: %d\n",
-				__func__, ret);
-			return ret;
+			pr_err("%s: temp read failed: %d, current temp: %d\n",
+				__func__, ret, pdata->curr_temp);
+			if (temp)
+				*temp = pdata->curr_temp;
+			return 0;
 		}
 	} else {
 		pr_err("%s: wsa_temp_reg_read is NULL\n", __func__);
@@ -115,9 +117,8 @@ temp_retry:
 
 	if (temp_val <= LOW_TEMP_THRESHOLD ||
 		temp_val >= HIGH_TEMP_THRESHOLD) {
-		printk_ratelimited("%s: T0: %d is out of range[%d, %d]\n",
-				   __func__, temp_val, LOW_TEMP_THRESHOLD,
-				   HIGH_TEMP_THRESHOLD);
+		pr_debug("%s: T0: %d is out of range[%d, %d]\n", __func__,
+			 temp_val, LOW_TEMP_THRESHOLD, HIGH_TEMP_THRESHOLD);
 		if (retry--) {
 			msleep(20);
 			goto temp_retry;
