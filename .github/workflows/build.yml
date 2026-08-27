@@ -112,43 +112,6 @@ jobs:
 
 
       #################################################
-      # Build normal kernel
-      #################################################
-
-      - name: Build Normal Kernel
-        working-directory: kernel
-        run: |
-          export PATH=$GITHUB_WORKSPACE/zyc13/bin:$PATH
-
-          make O=out \
-            ARCH=arm64 \
-            CC=clang \
-            CLANG_TRIPLE=aarch64-linux-gnu- \
-            CROSS_COMPILE=aarch64-linux-gnu- \
-            CROSS_COMPILE_ARM32=arm-linux-gnueabi- \
-            CROSS_COMPILE_COMPAT=arm-linux-gnueabi- \
-            ${{ matrix.defconfig }}
-
-          make O=out \
-            ARCH=arm64 \
-            CC=clang \
-            CLANG_TRIPLE=aarch64-linux-gnu- \
-            CROSS_COMPILE=aarch64-linux-gnu- \
-            CROSS_COMPILE_ARM32=arm-linux-gnueabi- \
-            CROSS_COMPILE_COMPAT=arm-linux-gnueabi- \
-            -j$(nproc)
-
-
-      - name: Save Normal Kernel
-        run: |
-          mkdir -p artifacts/normal
-
-          cp \
-            kernel/out/arch/arm64/boot/Image.gz-dtb \
-            artifacts/normal/Image.gz-dtb
-
-
-      #################################################
       # Setup ReSukiSU
       #################################################
 
@@ -254,26 +217,6 @@ jobs:
 
 
       #################################################
-      # Package normal kernel
-      #################################################
-
-      - name: Package Normal AnyKernel3
-        run: |
-          cp \
-            artifacts/normal/Image.gz-dtb \
-            AnyKernel3/Image.gz-dtb
-
-          cd AnyKernel3
-
-          zip -r9 \
-            ../A57-Kernel-${{ steps.generate-builddate.outputs.BUILDDATE }}.zip \
-            . \
-            -x ".git/*" \
-            -x "README.md" \
-            -x "*placeholder"
-
-
-      #################################################
       # Package ReSukiSU kernel
       #################################################
 
@@ -309,5 +252,4 @@ jobs:
           tag_name: r${{ github.run_number }}-${{ steps.generate-builddate.outputs.BUILDDATE }}
 
           files: |
-            ./A57-Kernel-${{ steps.generate-builddate.outputs.BUILDDATE }}.zip
             ./A57-Kernel-ReSukiSU-${{ steps.generate-builddate.outputs.BUILDDATE }}.zip
