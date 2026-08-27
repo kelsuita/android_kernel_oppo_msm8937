@@ -1,313 +1,56 @@
 name: Build Kernel
-
 on:
   push:
   workflow_dispatch:
-
 jobs:
   Build:
     name: Build Kernel
     runs-on: ubuntu-22.04
-
     strategy:
       fail-fast: false
       matrix:
         defconfig:
-          - lineageos_A57_defconfig
-
+          - lineageos_R9s_defconfig
     steps:
-
       - name: Set builddate
         id: generate-builddate
         run: echo "BUILDDATE=$(date +'%Y%m%d')" >> $GITHUB_OUTPUT
-
-
       - name: Set swap to 10G
         uses: pierotofy/set-swap-space@master
         with:
           swap-size-gb: 10
-
-
-      - name: Checkout Kernel
+      - name: Checkout
         uses: actions/checkout@v4
         with:
           path: kernel
-
-
-      - name: Checkout AnyKernel3
-        uses: actions/checkout@v4
-        with:
-          repository: osm0sis/AnyKernel3
-          path: AnyKernel3
-          fetch-depth: 1
-
-
-      - name: Install prerequisites
+      - name: ⭐ Install prerequisites
         run: |
           sudo apt-get update
-
-          sudo apt-get install -y \
-            curl git ftp lftp wget \
-            libarchive-tools ccache \
-            python2 python2-dev python3
-
-          sudo apt-get install -y \
-            pngcrush schedtool dpkg-dev \
-            liblz4-tool make optipng \
-            maven device-tree-compiler
-
-          sudo apt-get install -y \
-            libc6-dev-i386 \
-            lib32ncurses5-dev \
-            libx11-dev \
-            lib32z-dev \
-            libgl1-mesa-dev \
-            xsltproc
-
-          sudo apt-get install -y \
-            libxml2-utils \
-            libbz2-dev \
-            libbz2-1.0 \
-            libghc-bzlib-dev \
-            squashfs-tools \
-            lzop flex tree
-
-          sudo apt-get install -y \
-            build-essential \
-            bc \
-            gcc-aarch64-linux-gnu \
-            gcc-arm-linux-gnueabi \
-            libssl-dev \
-            libfl-dev
-
-          sudo apt-get install -y \
-            pwgen \
-            libswitch-perl \
-            policycoreutils \
-            minicom \
-            libxml-sax-base-perl \
-            libxml-simple-perl
-
-          sudo apt-get install -y \
-            zip unzip tar gzip bzip2 \
-            rar unrar \
-            llvm \
-            g++-multilib \
-            bison \
-            gperf \
-            zlib1g-dev \
-            automake
-
-
+          sudo apt-get install -y curl git ftp lftp wget libarchive-tools ccache python2 python2-dev python3
+          sudo apt-get install -y pngcrush schedtool dpkg-dev liblz4-tool make optipng maven device-tree-compiler
+          sudo apt-get install -y libc6-dev-i386 lib32ncurses5-dev libx11-dev lib32z-dev libgl1-mesa-dev xsltproc
+          sudo apt-get install -y libxml2-utils libbz2-dev libbz2-1.0 libghc-bzlib-dev squashfs-tools lzop flex tree
+          sudo apt-get install -y build-essential bc gcc-aarch64-linux-gnu gcc-arm-linux-gnueabi libssl-dev libfl-dev
+          sudo apt-get install -y pwgen libswitch-perl policycoreutils minicom libxml-sax-base-perl libxml-simple-perl
+          sudo apt-get install -y zip unzip tar gzip bzip2 rar unrar llvm g++-multilib bison gperf zlib1g-dev automake
+          
       - name: Get build tools
         run: |
-          wget \
-            https://github.com/ZyCromerZ/Clang/releases/download/13.0.1-20230207-release/Clang-13.0.1-20230207.tar.gz
-
+          wget https://github.com/ZyCromerZ/Clang/releases/download/13.0.1-20230207-release/Clang-13.0.1-20230207.tar.gz
           mkdir zyc13
-
-          tar zxvf \
-            Clang-13.0.1-20230207.tar.gz \
-            -C zyc13
-
-
-      #################################################
-      # Build normal kernel
-      #################################################
-
-      - name: Build Normal Kernel
+          tar zxvf "Clang-13.0.1-20230207.tar.gz" -C zyc13
+      - name: Build Kernel
         working-directory: kernel
         run: |
-          export PATH=$GITHUB_WORKSPACE/zyc13/bin:$PATH
-
-          make O=out \
-            ARCH=arm64 \
-            CC=clang \
-            CLANG_TRIPLE=aarch64-linux-gnu- \
-            CROSS_COMPILE=aarch64-linux-gnu- \
-            CROSS_COMPILE_ARM32=arm-linux-gnueabi- \
-            CROSS_COMPILE_COMPAT=arm-linux-gnueabi- \
-            ${{ matrix.defconfig }}
-
-          make O=out \
-            ARCH=arm64 \
-            CC=clang \
-            CLANG_TRIPLE=aarch64-linux-gnu- \
-            CROSS_COMPILE=aarch64-linux-gnu- \
-            CROSS_COMPILE_ARM32=arm-linux-gnueabi- \
-            CROSS_COMPILE_COMPAT=arm-linux-gnueabi- \
-            -j$(nproc)
-
-
-      - name: Save Normal Kernel
-        run: |
-          mkdir -p artifacts/normal
-
-          cp \
-            kernel/out/arch/arm64/boot/Image.gz-dtb \
-            artifacts/normal/Image.gz-dtb
-
-
-      #################################################
-      # Setup ReSukiSU
-      #################################################
-
-      - name: Setup ReSukiSU
+          PATH=$GITHUB_WORKSPACE/zyc13/bin:$PATH
+          make O=out ARCH=arm64 CC=clang CLANG_TRIBLE=aarch64-linux-gnu- CROSS_COMPILE=aarch64-linux-gnu- CROSS_COMPILE_ARM32=arm-linux-gnueabi- CROSS_COMPILE_COMPAT=arm-linux-gnueabi- ${{matrix.defconfig}}
+          make O=out ARCH=arm64 CC=clang CLANG_TRIBLE=aarch64-linux-gnu- CROSS_COMPILE=aarch64-linux-gnu- CROSS_COMPILE_ARM32=arm-linux-gnueabi- CROSS_COMPILE_COMPAT=arm-linux-gnueabi- -j$(nproc) 
+      - name: Bundle
         working-directory: kernel
         run: |
-          curl -LSs \
-            "https://raw.githubusercontent.com/ReSukiSU/ReSukiSU/main/kernel/setup.sh" \
-            | bash
-
-
-      - name: Enable ReSukiSU
-        working-directory: kernel
-        run: |
-          DEFCONFIG="arch/arm64/configs/${{ matrix.defconfig }}"
-
-          sed -i '/^CONFIG_KSU=/d' "$DEFCONFIG"
-          sed -i '/^CONFIG_KSU_MANUAL_HOOK=/d' "$DEFCONFIG"
-
-          cat >> "$DEFCONFIG" << EOF
-
-          # ReSukiSU
-          CONFIG_KSU=y
-          CONFIG_KSU_MANUAL_HOOK=n
-          EOF
-
-
-      #################################################
-      # Rebuild with ReSukiSU
-      #################################################
-
-      - name: Clean old build
-        working-directory: kernel
-        run: |
-          rm -rf out
-
-
-      - name: Build ReSukiSU Kernel
-        working-directory: kernel
-        run: |
-          export PATH=$GITHUB_WORKSPACE/zyc13/bin:$PATH
-
-          make O=out \
-            ARCH=arm64 \
-            CC=clang \
-            CLANG_TRIPLE=aarch64-linux-gnu- \
-            CROSS_COMPILE=aarch64-linux-gnu- \
-            CROSS_COMPILE_ARM32=arm-linux-gnueabi- \
-            CROSS_COMPILE_COMPAT=arm-linux-gnueabi- \
-            ${{ matrix.defconfig }}
-
-          make O=out \
-            ARCH=arm64 \
-            CC=clang \
-            CLANG_TRIPLE=aarch64-linux-gnu- \
-            CROSS_COMPILE=aarch64-linux-gnu- \
-            CROSS_COMPILE_ARM32=arm-linux-gnueabi- \
-            CROSS_COMPILE_COMPAT=arm-linux-gnueabi- \
-            olddefconfig
-
-          make O=out \
-            ARCH=arm64 \
-            CC=clang \
-            CLANG_TRIPLE=aarch64-linux-gnu- \
-            CROSS_COMPILE=aarch64-linux-gnu- \
-            CROSS_COMPILE_ARM32=arm-linux-gnueabi- \
-            CROSS_COMPILE_COMPAT=arm-linux-gnueabi- \
-            -j$(nproc)
-
-
-      - name: Check ReSukiSU Config
-        working-directory: kernel
-        run: |
-          grep -E "CONFIG_KSU|CONFIG_KSU_MANUAL_HOOK" out/.config
-
-
-      - name: Save ReSukiSU Kernel
-        run: |
-          mkdir -p artifacts/resukisu
-
-          cp \
-            kernel/out/arch/arm64/boot/Image.gz-dtb \
-            artifacts/resukisu/Image.gz-dtb
-
-
-      #################################################
-      # Configure AnyKernel3
-      #################################################
-
-      - name: Configure AnyKernel3
-        run: |
-          sed -i \
-            's|kernel.string=.*|kernel.string=A57 Kernel by Kelsuita|' \
-            AnyKernel3/anykernel.sh
-
-          sed -i \
-            's|do.devicecheck=1|do.devicecheck=0|' \
-            AnyKernel3/anykernel.sh
-
-          sed -i \
-            's|BLOCK=.*|BLOCK=auto;|' \
-            AnyKernel3/anykernel.sh
-
-
-      #################################################
-      # Package normal kernel
-      #################################################
-
-      - name: Package Normal AnyKernel3
-        run: |
-          cp \
-            artifacts/normal/Image.gz-dtb \
-            AnyKernel3/Image.gz-dtb
-
-          cd AnyKernel3
-
-          zip -r9 \
-            ../A57-Kernel-${{ steps.generate-builddate.outputs.BUILDDATE }}.zip \
-            . \
-            -x ".git/*" \
-            -x "README.md" \
-            -x "*placeholder"
-
-
-      #################################################
-      # Package ReSukiSU kernel
-      #################################################
-
-      - name: Package ReSukiSU AnyKernel3
-        run: |
-          rm -f AnyKernel3/Image.gz-dtb
-
-          cp \
-            artifacts/resukisu/Image.gz-dtb \
-            AnyKernel3/Image.gz-dtb
-
-          sed -i \
-            's|kernel.string=A57 Kernel by Kelsuita|kernel.string=A57 Kernel + ReSukiSU by Kelsuita|' \
-            AnyKernel3/anykernel.sh
-
-          cd AnyKernel3
-
-          zip -r9 \
-            ../A57-Kernel-ReSukiSU-${{ steps.generate-builddate.outputs.BUILDDATE }}.zip \
-            . \
-            -x ".git/*" \
-            -x "README.md" \
-            -x "*placeholder"
-
-
-      #################################################
-      # Release
-      #################################################
-
-      - name: Upload to Release
+          zip -q -r "unpatch-${{ matrix.defconfig }}.zip" ./out/arch/arm64/boot/*
+      - name: Upload to release
         uses: softprops/action-gh-release@v2
         with:
           tag_name: r${{ github.run_number }}-${{ steps.generate-builddate.outputs.BUILDDATE }}
-
-          files: |
-            ./A57-Kernel-${{ steps.generate-builddate.outputs.BUILDDATE }}.zip
-            ./A57-Kernel-ReSukiSU-${{ steps.generate-builddate.outputs.BUILDDATE }}.zip
+          files: ./kernel/unpatch-${{ matrix.defconfig }}.zip
