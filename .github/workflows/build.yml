@@ -172,7 +172,7 @@ jobs:
 
           # ReSukiSU
           CONFIG_KSU=y
-          CONFIG_KSU_MANUAL_HOOK=n
+          CONFIG_KSU_MANUAL_HOOK=y
           EOF
 
 
